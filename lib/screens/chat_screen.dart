@@ -8,8 +8,8 @@ class ChatScreen extends StatefulWidget {
   const ChatScreen({Key? key, required this.userId, required this.friendId}) : super(key: key);
 
   @override
-  _ChatScreenState createState() => _ChatScreenState();
-}
+    _ChatScreenState createState() => _ChatScreenState();
+  }
 
 class _ChatScreenState extends State<ChatScreen> {
   late ChatService chatService;
@@ -85,9 +85,31 @@ class _ChatScreenState extends State<ChatScreen> {
                           padding: const EdgeInsets.all(12.0),
                           decoration: BoxDecoration(
                             color: message['sender'] == widget.userId
-                                ? Colors.blue[200]
+                                ? const Color.fromARGB(255, 12, 181, 164)
                                 : Colors.grey[300],
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(10),
+                            topRight: Radius.circular(10),
+                            bottomLeft: message['sender'] == widget.userId
+                              ? Radius.circular(10)
+                              : Radius.zero, // Nếu người dùng gửi, bo góc dưới bên phải
+                            bottomRight: message['sender'] == widget.userId
+                              ? Radius.zero
+                              : Radius.circular(10), // Nếu người khác gửi, bo góc dưới bên trái
+                            ),
+                            border: Border.all(
+                              color: message['sender'] == widget.userId
+                                ? const Color.fromARGB(255, 12, 181, 164)
+                                : Colors.grey[500]!,
+                              width: 2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1), // Màu bóng
+                                blurRadius: 0, // Độ mờ của bóng
+                                offset: Offset(5, 9), // Vị trí của bóng (trái, dưới)
+                              ),
+                            ],
                           ),
                           child: Text(message['message']!),
                         ),
