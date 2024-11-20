@@ -5,7 +5,7 @@ class ChatService {
 
   // Khởi tạo kết nối socket
   void initSocket() {
-    socket = IO.io('http://26.113.132.145:3000', IO.OptionBuilder().setTransports(['websocket']).build());
+    socket = IO.io('http://26.39.142.20:3000', IO.OptionBuilder().setTransports(['websocket']).build());
     
     socket!.onConnect((_) {
       print('Connected to server');

@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class FriendService {
-  final String baseUrl = 'http://26.113.132.145:3000';
+  final String baseUrl = 'http://26.39.142.20:3000';
 
   Future<List<dynamic>> getFriends(String userId) async {
     final response = await http.get(Uri.parse('$baseUrl/api/friends/friends/$userId'));

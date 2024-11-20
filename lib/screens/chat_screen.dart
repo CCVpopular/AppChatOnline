@@ -27,7 +27,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   // Hàm tải tin nhắn cũ từ server
   Future<void> _loadMessages() async {
-    final url = Uri.parse('http://26.113.132.145:3000/api/messages/messages/${widget.userId}/${widget.friendId}');
+    final url = Uri.parse('http://26.39.142.20:3000/api/messages/messages/${widget.userId}/${widget.friendId}');
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
@@ -51,7 +51,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
 void _connectSocket() {
   socket = IO.io(
-    'http://26.113.132.145:3000',
+    'http://26.39.142.20:3000',
     IO.OptionBuilder().setTransports(['websocket']).build(),
   );
 
