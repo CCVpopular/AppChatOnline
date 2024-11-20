@@ -21,11 +21,6 @@ class ChatService {
     );
 
     socket.onConnect((_) {
-  // Khởi tạo kết nối socket
-  void initSocket() {
-    socket = IO.io('http://26.39.142.20:3000', IO.OptionBuilder().setTransports(['websocket']).build());
-    
-    socket!.onConnect((_) {
       print('Connected to server');
 
       // Tham gia phòng chat
