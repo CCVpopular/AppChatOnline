@@ -82,7 +82,8 @@ router.get('/friends/:userId', async (req, res) => {
 router.post('/accept-friend', async (req, res) => {
   const { friendshipId } = req.body;
   try {
-    const friendship = await Friendship.findById(friendshipId);
+    const friendship = await Friendship.findById(friendshipId).populate('requester', 'username') // Lấy thông tin `username` từ bảng User
+    .populate('receiver', 'username');;
 
     if (!friendship || friendship.status !== 'pending') {
       return res.status(400).send({ error: 'Friendship is not pending' });
@@ -91,25 +92,15 @@ router.post('/accept-friend', async (req, res) => {
     friendship.status = 'accepted';
     await friendship.save();
 
-    // Tạo một biến chứa dữ liệu cần phát
-    const data = {
-      friendshipId: friendship._id,
-      status: 'accepted',
-      requester: friendship.requester,
-      receiver: friendship.receiver,
-    };
-
     // Phát sự kiện qua socket.io để cập nhật danh sách bạn bè
     const io = req.app.get('socketio');
-    io.emit('friendshipUpdated', data);
+    io.emit('friendshipUpdated', friendship);
 
-    res.send('Friend request accepted');
+    res.send('Friend request accepted'+ friendship);
   } catch (err) {
     console.error('Error accepting friend request:', err);
     res.status(500).send({ error: 'Failed to accept friend request' });
   }
 });
-
-
 
 module.exports = router;
