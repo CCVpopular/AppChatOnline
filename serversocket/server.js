@@ -20,6 +20,8 @@ mongoose.connect('mongodb://localhost:27017/chatApp', {
 mongoose.connection.on('connected', () => console.log('MongoDB connected'));
 mongoose.connection.on('error', (err) => console.error('MongoDB connection error:', err));
 
+app.set('socketio', io);
+
 // Middleware
 app.use(express.json());
 
@@ -81,10 +83,6 @@ io.on('connection', (socket) => {
 
   
 });
-
-
-
-
 
 // Start server
 server.listen(3000, '0.0.0.0', () => console.log('Server is running on :3000'));
