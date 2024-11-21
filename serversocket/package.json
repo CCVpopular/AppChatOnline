@@ -15,6 +15,6 @@
     "bcryptjs": "^2.4.3",
     "express": "^4.21.1",
     "mongoose": "^8.8.1",
-    "socket.io": "^4.8.1"
+    "socket.io": "^3.1.2"
   }
 }
