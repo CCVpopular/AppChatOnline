@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class FriendService {
-  final String baseUrl = 'http://26.113.132.145:3000';
+  final String baseUrl = 'http://26.24.143.103:3000';
 
   // StreamController để quản lý danh sách bạn bè
   final _friendsStreamController = StreamController<List<dynamic>>.broadcast();

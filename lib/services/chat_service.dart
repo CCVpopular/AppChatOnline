@@ -16,7 +16,7 @@ class ChatService {
   // Kết nối socket và lắng nghe sự kiện
   void _connectSocket() {
     socket = IO.io(
-      'http://26.113.132.145:3000',
+      'http://26.24.143.103:3000',
       IO.OptionBuilder().setTransports(['websocket']).build(),
     );
 
@@ -58,7 +58,7 @@ class ChatService {
 
   // Hàm lấy tin nhắn cũ
   Future<List<Map<String, String>>> loadMessages() async {
-    final url = Uri.parse('http://26.113.132.145:3000/api/messages/messages/$userId/$friendId');
+    final url = Uri.parse('http://26.24.143.103:3000/api/messages/messages/$userId/$friendId');
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {

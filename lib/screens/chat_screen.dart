@@ -1,4 +1,6 @@
+import 'package:appchatonline/screens/video_call_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
 import '../services/chat_service.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -11,6 +13,10 @@ class ChatScreen extends StatefulWidget {
   _ChatScreenState createState() => _ChatScreenState();
 }
 
+// Khởi tạo RTCVideoRenderer
+  late RTCVideoRenderer localRenderer;
+  late RTCVideoRenderer remoteRenderer;
+
 class _ChatScreenState extends State<ChatScreen> {
   late ChatService chatService;
   final TextEditingController _controller = TextEditingController();
@@ -20,6 +26,10 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+
+    // Khởi tạo các đối tượng video renderer
+    localRenderer = RTCVideoRenderer();
+    remoteRenderer = RTCVideoRenderer();
 
     // Khởi tạo ChatService
     chatService = ChatService(widget.userId, widget.friendId);
@@ -57,9 +67,25 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  void _startVideoCall() {
+    print("Navigating to video call screen...");  // Thêm log
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => VideoCallScreen(
+          userId: widget.userId,
+          friendId: widget.friendId,
+          localRenderer: localRenderer,  
+          remoteRenderer: remoteRenderer, 
+        ),
+      ),
+    );
+  }
   @override
   void dispose() {
     chatService.dispose();
+    localRenderer.dispose();  
+    remoteRenderer.dispose(); 
     super.dispose();
   }
 
@@ -108,6 +134,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 IconButton(
                   icon: Icon(Icons.send),
                   onPressed: _sendMessage,
+                ),
+                IconButton(
+                  icon: Icon(Icons.video_call),
+                  onPressed: _startVideoCall,  // Thêm nút gọi video
                 ),
               ],
             ),
