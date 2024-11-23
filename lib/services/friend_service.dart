@@ -1,35 +1,39 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:appchatonline/services/SocketManager.dart';
 import 'package:http/http.dart' as http;
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+
+import '../config/config.dart';
 
 class FriendService {
   final StreamController<List<dynamic>> _friendsController = StreamController<List<dynamic>>.broadcast();
   Stream<List<dynamic>> get friendsStream => _friendsController.stream;
-  IO.Socket? _socket;
+  late IO.Socket socket;
 
   List<dynamic> _friends = [];
-
+  final String baseUrl = Config.apiBaseUrl;
   FriendService() {
+    SocketManager(Config.apiBaseUrl);
+    socket = SocketManager(Config.apiBaseUrl).getSocket();
     _connectToSocket();
   }
 
   void _connectToSocket() {
-    _socket = IO.io('http://26.113.132.145:3000', <String, dynamic>{
-      'transports': ['websocket'],
-    });
-
-    _socket?.on('friendshipUpdated', (data) {
-      // Lắng nghe sự kiện cập nhật danh sách bạn bè
+    socket.on('friendshipUpdated', (data) {
       if (data['status'] == 'accepted') {
         _fetchFriends(data);
       }
     });
   }
 
+  void dispose() {
+    _friendsController.close();
+  }
+
   Future<void> getFriends(String userId) async {
     try {
-      final url = Uri.parse('http://26.113.132.145:3000/api/friends/friends/$userId');
+      final url = Uri.parse('$baseUrl/api/friends/friends/$userId');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
@@ -64,8 +68,8 @@ class FriendService {
   }
 
 
-  void dispose() {
-    _socket?.dispose();
-    _friendsController.close();
-  }
+  // void dispose() {
+  //   _socket?.dispose();
+  //   _friendsController.close();
+  // }
 }
