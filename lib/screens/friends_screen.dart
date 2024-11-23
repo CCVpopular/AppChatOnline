@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/friend_service.dart';
+import 'addfriend_screen.dart';
 import 'chat_screen.dart';
+import 'friendrequests_screen.dart';
 
 class FriendsScreen extends StatefulWidget {
   final String userId;
@@ -12,75 +14,104 @@ class FriendsScreen extends StatefulWidget {
 }
 
 class _FriendsScreenState extends State<FriendsScreen> {
-  List<dynamic> friends = [];
   final FriendService friendService = FriendService();
 
   @override
   void initState() {
     super.initState();
-    _loadFriends();
+    // Tải danh sách bạn bè ban đầu
+    friendService.getFriends(widget.userId);
   }
 
-  Future<void> _loadFriends() async {
-    try {
-      final data = await friendService.getFriends(widget.userId);
-      setState(() {
-        friends = data;
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load friends: $e')),
-      );
-    }
+  @override
+  void dispose() {
+    friendService.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Friends')),
-      body: ListView.builder(
-        itemCount: friends.length,
-        itemBuilder: (context, index) {
-          final friend = friends[index];
-          final friendUsername = friend['requester']['_id'] == widget.userId
-              ? friend['receiver']['username']
-              : friend['requester']['username'];
+      appBar: AppBar(
+        title: Text('Friends'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: () {
+              friendService
+                  .getFriends(widget.userId); // Tải lại danh sách bạn bè
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.person_add),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AddFriendScreen(userId: widget.userId),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.group),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      FriendRequestsScreen(userId: widget.userId),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      body: StreamBuilder<List<dynamic>>(
+        stream: friendService.friendsStream,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
 
-          return ListTile(
-            title: Text(friendUsername),
-            trailing: friend['status'] == 'pending'
-                ? ElevatedButton(
-                    onPressed: () async {
-                      try {
-                        await friendService.acceptFriend(friend['_id']);
-                        _loadFriends();
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Failed to accept request: $e')),
+          if (snapshot.hasError) {
+            return Center(child: Text('Failed to load friends'));
+          }
+
+          final friends = snapshot.data ?? [];
+
+          return ListView.builder(
+            itemCount: friends.length,
+            itemBuilder: (context, index) {
+              final friend = friends[index];
+              final friendUsername = friend['requester']['_id'] == widget.userId
+                  ? friend['receiver']['username']
+                  : friend['requester']['username'];
+
+              return ListTile(
+                title: Text(friendUsername),
+                onTap: friend['status'] == 'accepted'
+                    ? () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChatScreen(
+                              userId: widget.userId,
+                              friendId:
+                                  friend['requester']['_id'] == widget.userId
+                                      ? friend['receiver']['_id']
+                                      : friend['requester']['_id'],
+                            ),
+                          ),
                         );
                       }
-                    },
-                    child: Text('Accept'),
-                  )
-                : null,
-            onTap: friend['status'] == 'accepted'
-                ? () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ChatScreen(
-                          userId: widget.userId,
-                          friendId: friend['requester']['_id'] == widget.userId
-                              ? friend['receiver']['_id']
-                              : friend['requester']['_id'],
-                        ),
-                      ),
-                    );
-                  }
-                : null,
+                    : null,
+              );
+            },
           );
         },
       ),
+
     );
   }
 }

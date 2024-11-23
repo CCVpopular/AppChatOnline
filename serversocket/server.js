@@ -6,6 +6,7 @@ const authRoutes = require('./routes/authRoutes');
 const friendRoutes = require('./routes/friendRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const Message = require('./models/Message');
+const userRoutes = require('./routes/userRoutes')
 
 const app = express();
 const server = http.createServer(app);
@@ -26,6 +27,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/friends', friendRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/users', userRoutes);
 
 io.on('connection', (socket) => {
   console.log('New client connected');
