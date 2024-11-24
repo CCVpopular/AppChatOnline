@@ -5,24 +5,26 @@ class RegisterScreen extends StatelessWidget {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
+  RegisterScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Register')),
+      appBar: AppBar(title: const Text('Register')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             TextField(
               controller: usernameController,
-              decoration: InputDecoration(labelText: 'Username'),
+              decoration: const InputDecoration(labelText: 'Username'),
             ),
             TextField(
               controller: passwordController,
               obscureText: true,
-              decoration: InputDecoration(labelText: 'Password'),
+              decoration: const InputDecoration(labelText: 'Password'),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
                 try {
@@ -32,7 +34,7 @@ class RegisterScreen extends StatelessWidget {
                     passwordController.text,
                   );
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Registration successful!')),
+                    const SnackBar(content: Text('Registration successful!')),
                   );
                   Navigator.pop(context); // Quay lại màn hình đăng nhập
                 } catch (e) {
@@ -41,7 +43,7 @@ class RegisterScreen extends StatelessWidget {
                   );
                 }
               },
-              child: Text('Register'),
+              child: const Text('Register'),
             ),
           ],
         ),

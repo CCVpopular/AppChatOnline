@@ -1,4 +1,3 @@
-import 'package:appchatonline/screens/chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -10,12 +9,12 @@ class VideoCallScreen extends StatefulWidget {
   final RTCVideoRenderer remoteRenderer;
 
   const VideoCallScreen({
-    Key? key,
+    super.key,
     required this.userId,
     required this.friendId,
     required this.localRenderer,
-    required this.remoteRenderer, 
-  }) : super(key: key);
+    required this.remoteRenderer,
+  });
 
   @override
   _VideoCallScreenState createState() => _VideoCallScreenState();
@@ -28,6 +27,8 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
   @override
   void initState() {
     super.initState();
+    widget.localRenderer.initialize();
+    widget.remoteRenderer.initialize();
     requestPermissions(); // Yêu cầu quyền khi màn hình khởi tạo
     _initiateCall();
   }
@@ -43,41 +44,43 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     } else {
       // Xử lý trường hợp quyền bị từ chối
       print("Permissions denied");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text("Camera and microphone permissions are required.")),
+      );
+      if (cameraStatus.isPermanentlyDenied || micStatus.isPermanentlyDenied) {
+        openAppSettings();
+      }
     }
   }
 
-  // Khởi tạo cuộc gọi và bắt đầu stream từ camera
   void _initiateCall() async {
-    await widget.localRenderer.initialize();  // Khởi tạo renderer trước
-    await widget.remoteRenderer.initialize();  // Khởi tạo renderer trước
+    await widget.localRenderer.initialize(); // Khởi tạo renderer trước
+    await widget.remoteRenderer.initialize(); // Khởi tạo renderer trước
     final mediaConstraints = {
       'audio': true,
       'video': {
-        'facingMode': 'user',  // Dùng camera trước
+        'facingMode': 'user', // Sử dụng camera trước
       },
     };
-    
 
-    MediaStream localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
-    if (localStream != null) {
-      print('Stream đã được lấy thành công');
-      localRenderer.srcObject = localStream;
-    }else {
-      print('Không thể lấy stream từ camera');
+    try {
+      MediaStream localStream =
+          await navigator.mediaDevices.getUserMedia(mediaConstraints);
+      widget.localRenderer.srcObject = localStream;
+      print("Local stream initialized: ${localStream.id}");
+    } catch (e) {
+      print("Error initializing camera: $e");
     }
 
-    
-    widget.localRenderer.srcObject = localStream;
-    
     // Thực hiện các kết nối WebRTC khác như kết nối với friendId để gửi stream video đi
   }
-  
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Video Call'),
+        title: const Text('Video Call'),
         actions: [
           IconButton(
             icon: Icon(isMicrophoneMuted ? Icons.mic_off : Icons.mic),
@@ -92,14 +95,19 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: RTCVideoView(widget.remoteRenderer),  // Video của bạn bè
+            child: widget.remoteRenderer.srcObject != null
+                ? RTCVideoView(widget.remoteRenderer)
+                : Container(
+                    color: Colors
+                        .black), // Hiển thị màn hình đen nếu chưa có dữ liệu
           ),
           Positioned(
             bottom: 20,
             right: 20,
             width: 100,
             height: 150,
-            child: RTCVideoView(widget.localRenderer, mirror: true),  // Video của người dùng
+            child: RTCVideoView(widget.localRenderer,
+                mirror: true), // Video của người dùng
           ),
           _buildControlPanel(),
         ],
@@ -112,11 +120,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     setState(() {
       isMicrophoneMuted = !isMicrophoneMuted;
     });
-    // Thực hiện tắt/mở micro
-    final audioTrack = widget.localRenderer.srcObject?.getTracks().firstWhere((track) => track.kind == 'audio');
-    if (audioTrack != null) {
-      audioTrack.enabled = !isMicrophoneMuted;
-    }
+    // Thực hiện tắt/bật micro nếu cần
   }
 
   // Nút điều khiển camera
@@ -124,13 +128,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     setState(() {
       isCameraOff = !isCameraOff;
     });
-    // Thực hiện tắt/mở camera
-    final videoTrack = widget.localRenderer.srcObject?.getTracks().firstWhere((track) => track.kind == 'video');
-    if (videoTrack != null) {
-      videoTrack.enabled = !isCameraOff;
-    }else {
-    print("Không tìm thấy track video");
-    }
+    // Thực hiện tắt/bật camera nếu cần
   }
 
   // Tạo điều khiển thêm
@@ -143,12 +141,12 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: Icon(Icons.call_end),
+            icon: const Icon(Icons.call_end),
             color: Colors.red,
             onPressed: _endCall,
           ),
           IconButton(
-            icon: Icon(Icons.switch_camera),
+            icon: const Icon(Icons.switch_camera),
             onPressed: _switchCamera,
           ),
         ],
@@ -158,17 +156,11 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
 
   // Kết thúc cuộc gọi
   void _endCall() {
-    widget.localRenderer.srcObject?.getTracks().forEach((track) => track.stop());  // Dừng tất cả các track
-    widget.remoteRenderer.srcObject?.getTracks().forEach((track) => track.stop());
     Navigator.pop(context);
   }
 
   // Chuyển đổi camera (nếu hỗ trợ)
   void _switchCamera() {
-    final videoTrack = widget.localRenderer.srcObject?.getTracks().firstWhere((track) => track.kind == 'video');
-    if (videoTrack != null) {
-      // Chuyển đổi camera (dùng phương thức switchCamera của WebRTC)
-      videoTrack.switchCamera();
-    }
+    // Sử dụng API WebRTC để chuyển đổi camera nếu cần
   }
 }

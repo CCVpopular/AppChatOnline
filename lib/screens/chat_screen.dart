@@ -7,7 +7,7 @@ class ChatScreen extends StatefulWidget {
   final String userId;
   final String friendId;
 
-  const ChatScreen({Key? key, required this.userId, required this.friendId}) : super(key: key);
+  const ChatScreen({super.key, required this.userId, required this.friendId});
 
   @override
   _ChatScreenState createState() => _ChatScreenState();
@@ -92,12 +92,12 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Chat')),
+      appBar: AppBar(title: const Text('Chat')),
       body: Column(
         children: [
           Expanded(
             child: isLoading
-                ? Center(child: CircularProgressIndicator())
+                ? const Center(child: CircularProgressIndicator())
                 : ListView.builder(
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
@@ -128,15 +128,15 @@ class _ChatScreenState extends State<ChatScreen> {
                 Expanded(
                   child: TextField(
                     controller: _controller,
-                    decoration: InputDecoration(hintText: 'Enter a message'),
+                    decoration: const InputDecoration(hintText: 'Enter a message'),
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.send),
+                  icon: const Icon(Icons.send),
                   onPressed: _sendMessage,
                 ),
                 IconButton(
-                  icon: Icon(Icons.video_call),
+                  icon: const Icon(Icons.video_call),
                   onPressed: _startVideoCall,  // Thêm nút gọi video
                 ),
               ],

@@ -7,7 +7,7 @@ import 'friendrequests_screen.dart';
 class FriendsScreen extends StatefulWidget {
   final String userId;
 
-  const FriendsScreen({Key? key, required this.userId}) : super(key: key);
+  const FriendsScreen({super.key, required this.userId});
 
   @override
   _FriendsScreenState createState() => _FriendsScreenState();
@@ -33,17 +33,17 @@ class _FriendsScreenState extends State<FriendsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Friends'),
+        title: const Text('Friends'),
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh),
             onPressed: () {
               friendService
                   .getFriends(widget.userId); // Tải lại danh sách bạn bè
             },
           ),
           IconButton(
-            icon: Icon(Icons.person_add),
+            icon: const Icon(Icons.person_add),
             onPressed: () {
               Navigator.push(
                 context,
@@ -54,7 +54,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
             },
           ),
           IconButton(
-            icon: Icon(Icons.group),
+            icon: const Icon(Icons.group),
             onPressed: () {
               Navigator.push(
                 context,
@@ -71,11 +71,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
         stream: friendService.friendsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text('Failed to load friends'));
+            return const Center(child: Text('Failed to load friends'));
           }
 
           final friends = snapshot.data ?? [];
