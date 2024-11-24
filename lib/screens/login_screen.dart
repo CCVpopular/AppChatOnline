@@ -33,7 +33,6 @@ class LoginScreen extends StatelessWidget {
               obscureText: true,
               decoration: InputDecoration(labelText: 'Password'),
             ),
-            SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
                 try {
@@ -56,7 +55,6 @@ class LoginScreen extends StatelessWidget {
               },
               child: Text('Login'),
             ),
-            SizedBox(height: 20),
             TextButton(
               onPressed: () => Navigator.pushNamed(context, '/register'),
               child: Text('Don\'t have an account? Register'),

@@ -41,6 +41,11 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  
+  intl: ^0.18.0
+  # đây là thư viện định dạng lại thời gian
+  # có thể thư chạy lệnh 'dart pub get'
+
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

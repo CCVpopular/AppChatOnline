@@ -16,7 +16,7 @@ class ChatService {
   // Kết nối socket và lắng nghe sự kiện
   void _connectSocket() {
     socket = IO.io(
-      'http://26.113.132.145:3000',
+      'http://26.39.142.20:3000',
       IO.OptionBuilder().setTransports(['websocket']).build(),
     );
 
@@ -36,6 +36,7 @@ class ChatService {
         _messageStreamController.add({
           'sender': data['sender'],
           'message': data['message'],
+          'timestamp': data['timestamp'],  // Thêm timestamp
         });
       }
     });
@@ -43,22 +44,26 @@ class ChatService {
 
   // Hàm gửi tin nhắn
   void sendMessage(String message) {
+    final timestamp = DateTime.now().toIso8601String();  // Lấy thời gian hiện tại
+
     socket.emit('sendMessage', {
       'sender': userId,
       'receiver': friendId,
       'message': message,
+      'timestamp': timestamp,  // Thêm timestamp vào dữ liệu gửi
     });
 
     // Thêm tin nhắn vào Stream ngay lập tức
     _messageStreamController.add({
       'sender': userId,
       'message': message,
+      'timestamp': timestamp,  // Thêm timestamp
     });
   }
 
   // Hàm lấy tin nhắn cũ
   Future<List<Map<String, String>>> loadMessages() async {
-    final url = Uri.parse('http://26.113.132.145:3000/api/messages/messages/$userId/$friendId');
+    final url = Uri.parse('http://26.39.142.20:3000/api/messages/messages/$userId/$friendId');
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
@@ -67,6 +72,7 @@ class ChatService {
           return {
             'sender': msg['sender'].toString(),
             'message': msg['message'].toString(),
+            'timestamp': msg['timestamp'].toString(),  // Thêm timestamp vào tin nhắn cũ
           };
         }).toList();
       } else {
