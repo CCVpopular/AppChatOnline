@@ -64,7 +64,23 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Create Group')),
+      appBar: AppBar(
+        title: Text('Create Group'),
+        backgroundColor: Colors.transparent,   // Màu của AppBar
+        elevation: 4.0, // Tạo hiệu ứng đổ bóng cho AppBar
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color.fromARGB(207, 70, 131, 180),  // Màu thứ hai
+                Color.fromARGB(41, 130, 190, 197), // Màu đầu tiên
+              ],
+            ),
+          ),
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(

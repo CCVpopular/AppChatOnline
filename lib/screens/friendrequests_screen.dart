@@ -84,6 +84,20 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Friend Requests'),
+        backgroundColor: Colors.transparent,   // Màu của AppBar
+        elevation: 4.0, // Tạo hiệu ứng đổ bóng cho AppBar
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color.fromARGB(207, 70, 131, 180),  // Màu thứ hai
+                Color.fromARGB(41, 130, 190, 197), // Màu đầu tiên
+              ],
+            ),
+          ),
+        ),
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())

@@ -35,6 +35,20 @@ class _FriendsScreenState extends State<FriendsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Friends'),
+        backgroundColor: Colors.transparent,   // Màu của AppBar
+        elevation: 4.0, // Tạo hiệu ứng đổ bóng cho AppBar
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color.fromARGB(207, 70, 131, 180),  // Màu thứ hai
+                Color.fromARGB(41, 130, 190, 197), // Màu đầu tiên
+              ],
+            ),
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -106,21 +120,42 @@ return ListView.builder(
         ? (friendReceiver['username'] ?? 'Unknown')
         : (friendRequester['username'] ?? 'Unknown');
 
-    return ListTile(
-      title: Text(friendUsername),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChatScreen(
-              userId: widget.userId,
-              friendId: friendRequester['_id'] == widget.userId
-                  ? friendReceiver['_id'] ?? ''
-                  : friendRequester['_id'] ?? '',
-            ),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(15), // Bo tròn góc
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.fromARGB(207, 70, 131, 180),  // Màu thứ hai của gradient
+            Color.fromARGB(129, 130, 190, 197), // Màu đầu tiên
+          ],
+        ),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(10.0), // Padding cho nội dung ListTile
+        title: Text(
+          friendUsername,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold, 
+            color: Color.fromARGB(255, 0, 0, 0), // Màu chữ trắng để nổi bật trên nền gradient
           ),
-        );
-      },
+        ),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ChatScreen(
+                userId: widget.userId,
+                friendId: friendRequester['_id'] == widget.userId
+                    ? friendReceiver['_id'] ?? ''
+                    : friendRequester['_id'] ?? '',
+              ),
+            ),
+          );
+        },
+      ),
     );
   },
 );
