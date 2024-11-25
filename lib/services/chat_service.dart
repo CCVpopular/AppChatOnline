@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:file_picker/file_picker.dart';
 import 'package:appchatonline/services/SocketManager.dart';
 import 'package:http/http.dart' as http;
 import 'package:socket_io_client/socket_io_client.dart' as IO;
@@ -25,6 +26,8 @@ ChatService(this.userId, this.friendId) {
         _messageStreamController.add({
           'sender': data['sender'],
           'message': data['message'],
+          'fileUrl': data.containsKey('fileUrl') ? data['fileUrl'] : null, 
+          'messageType': data['messageType'] ?? 'text', 
         });
       }
     });
@@ -50,6 +53,7 @@ ChatService(this.userId, this.friendId) {
 
   // Hàm lấy tin nhắn cũ
   Future<List<Map<String, String>>> loadMessages() async {
+
     final url = Uri.parse('http://$baseUrl/api/messages/messages/$userId/$friendId');
     try {
       final response = await http.get(url);
@@ -68,6 +72,31 @@ ChatService(this.userId, this.friendId) {
       throw Exception('Error loading messages: $e');
     }
   }
+
+  //Xử lí upload file, hình ảnh
+  Future<void> sendFile(PlatformFile file) async {
+    final url = Uri.parse('http://26.24.143.103:3000/api/messages/upload');
+    final request = http.MultipartRequest('POST', url);
+
+    request.fields['sender'] = userId;
+    request.fields['receiver'] = friendId;
+    request.files.add(await http.MultipartFile.fromPath(
+      'file',
+      file.path!,
+      filename: file.name,
+  ));
+
+  final response = await request.send();
+    if (response.statusCode == 200) {
+      print('File uploaded successfully');
+    } else {
+      print('Failed to upload file: ${response.reasonPhrase}');
+    }
+  }
+
+  //Xử lí nhận file từ socket
+  
+
 
   // Stream để lắng nghe tin nhắn
   Stream<Map<String, String>> get messageStream => _messageStreamController.stream;
