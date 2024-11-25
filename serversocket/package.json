@@ -16,6 +16,6 @@
     "express": "^4.21.1",
     "mongoose": "^8.8.1",
     "serversocket": "file:",
-    "socket.io": "^4.8.1"
+    "socket.io": "^3.1.2"
   }
 }

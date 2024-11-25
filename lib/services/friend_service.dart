@@ -1,56 +1,75 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:appchatonline/services/SocketManager.dart';
 import 'package:http/http.dart' as http;
+import 'package:socket_io_client/socket_io_client.dart' as IO;
+
+import '../config/config.dart';
 
 class FriendService {
-  final String baseUrl = 'http://26.24.143.103:3000';
+  final StreamController<List<dynamic>> _friendsController = StreamController<List<dynamic>>.broadcast();
+  Stream<List<dynamic>> get friendsStream => _friendsController.stream;
+  late IO.Socket socket;
 
-  // StreamController để quản lý danh sách bạn bè
-  final _friendsStreamController = StreamController<List<dynamic>>.broadcast();
-
-  // Getter để cung cấp Stream cho các widget
-  Stream<List<dynamic>> get friendsStream => _friendsStreamController.stream;
-
-  // Hàm tải danh sách bạn bè
-  Future<void> getFriends(String userId) async {
-    final response = await http.get(Uri.parse('$baseUrl/api/friends/friends/$userId'));
-    if (response.statusCode == 200) {
-      final List<dynamic> friends = jsonDecode(response.body);
-      _friendsStreamController.add(friends); // Phát danh sách bạn bè qua Stream
-    } else {
-      throw Exception('Failed to fetch friends');
-    }
+  List<dynamic> _friends = [];
+  final String baseUrl = Config.apiBaseUrl;
+  FriendService() {
+    SocketManager(Config.apiBaseUrl);
+    socket = SocketManager(Config.apiBaseUrl).getSocket();
+    _connectToSocket();
   }
 
-  // Hàm gửi yêu cầu kết bạn
-  Future<void> addFriend(String requesterId, String receiverId) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/friends/add-friend'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'requesterId': requesterId, 'receiverId': receiverId}),
-    );
-    if (response.statusCode != 201) {
-      throw Exception('Failed to send friend request');
-    }
+  void _connectToSocket() {
+    socket.on('friendshipUpdated', (data) {
+      if (data['status'] == 'accepted') {
+        _fetchFriends(data);
+      }
+    });
   }
 
-  // Hàm chấp nhận lời mời kết bạn
-  Future<void> acceptFriend(String friendshipId, String userId) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/friends/accept-friend'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'friendshipId': friendshipId}),
-    );
-    if (response.statusCode == 200) {
-      // Sau khi chấp nhận, tải lại danh sách bạn bè
-      await getFriends(userId);
-    } else {
-      throw Exception('Failed to accept friend request');
-    }
-  }
-
-  // Đóng StreamController khi không còn sử dụng
   void dispose() {
-    _friendsStreamController.close();
+    _friendsController.close();
   }
+
+  Future<void> getFriends(String userId) async {
+    try {
+      final url = Uri.parse('$baseUrl/api/friends/friends/$userId');
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        _friends = List<Map<String, dynamic>>.from(jsonDecode(response.body));
+        _friendsController.add(_friends);
+      } else {
+        throw Exception('Failed to fetch friends');
+      }
+    } catch (e) {
+      print('Error fetching friends: $e');
+      _friendsController.addError(e);
+    }
+  }
+
+  void _fetchFriends(Map<String, dynamic> data) {
+    // Kiểm tra xem bạn bè này đã tồn tại trong danh sách chưa
+    final index = _friends.indexWhere((friend) =>
+        (friend['requester'] == data['requester'] && friend['receiver'] == data['receiver']) ||
+        (friend['requester'] == data['receiver'] && friend['receiver'] == data['requester']));
+
+    if (index != -1) {
+      // Nếu tồn tại, cập nhật thông tin
+      _friends[index] = data;
+    } else {
+      // Nếu không, thêm vào danh sách
+      _friends.add(data);
+    }
+    print(_friends);
+
+    // Thông báo cập nhật tới giao diện
+    _friendsController.add(List.from(_friends)); // Tạo một danh sách mới để StreamBuilder nhận thay đổi
+  }
+
+
+  // void dispose() {
+  //   _socket?.dispose();
+  //   _friendsController.close();
+  // }
 }
