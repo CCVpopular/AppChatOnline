@@ -80,25 +80,11 @@ class _ChatScreenState extends State<ChatScreen> {
                 itemCount: messages.length,
                 itemBuilder: (context, index) {
                   final message = messages[index];
-                  final String timestampString = message['timestamp']?.toString() ?? ''; // Lấy chuỗi timestamp
+                  print('Message object: $message');
+                  message.forEach((key, value) {
+                    print('$key: $value');
+                  });
 
-                  // Kiểm tra và định dạng timestamp
-                  String formattedTime = 'No timestamp'; // Giá trị mặc định nếu không có timestamp
-                  if (timestampString.isNotEmpty) {
-                    try {
-                      // Thử chuyển đổi chuỗi timestamp thành DateTime
-                      final DateTime timestamp = DateTime.parse(timestampString);
-
-                      // Định dạng lại timestamp theo định dạng 'Thứ mấy - Giờ AM/PM - Ngày/Tháng/Năm'
-                      formattedTime = DateFormat('EEE - hh:mm a - dd/MM/yyyy').format(timestamp);
-                    } catch (e) {
-                      // Nếu không thể phân tích chuỗi thành DateTime, in lỗi
-                      print('Error parsing timestamp: $e');
-                      formattedTime = 'Invalid time format'; // Hiển thị thông báo lỗi
-                    }
-                  }
-                  print('Timestamp string: $timestampString'); // Kiểm tra giá trị của timestampString
-                  print(formattedTime); // In kết quả thời gian đã được định dạng
                   return Column(
                     crossAxisAlignment: message['sender'] == widget.userId
                         ? CrossAxisAlignment.end
@@ -152,7 +138,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       Padding(
                         padding: const EdgeInsets.only(left: 8.0, right: 8.0),
                         child: Text(
-                          formattedTime,
+                          message['createdAt'] ?? 'No date found', // Hiển thị thời gian gốc mà không chuyển đổi
                           style: TextStyle(fontSize: 12, color: Colors.grey),
                         ),
                       ),

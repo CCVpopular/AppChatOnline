@@ -25,7 +25,7 @@ ChatService(this.userId, this.friendId) {
         _messageStreamController.add({
           'sender': data['sender'],
           'message': data['message'],
-          'timestamp': data['timestamp'],  // Thêm timestamp
+          'createdAt': data['createdAt'],  // Thêm timestamp
         });
       }
     });
@@ -34,13 +34,13 @@ ChatService(this.userId, this.friendId) {
   }
 
   void sendMessage(String message) {
-    final timestamp = DateTime.now().toIso8601String();  // Lấy thời gian hiện tại
+    final createdAt = DateTime.now().toIso8601String();  // Lấy thời gian hiện tại
 
     socket.emit('sendMessage', {
       'sender': userId,
       'receiver': friendId,
       'message': message,
-      'timestamp': timestamp,  // Thêm timestamp vào dữ liệu gửi
+      'createdAt': createdAt,  // Thêm timestamp vào dữ liệu gửi
     });
     _messageStreamController.add({'sender': userId, 'message': message});
   }
@@ -63,7 +63,7 @@ ChatService(this.userId, this.friendId) {
           return {
             'sender': msg['sender'].toString(),
             'message': msg['message'].toString(),
-            'timestamp': msg['timestamp'].toString(),  // Thêm timestamp vào tin nhắn cũ
+            'createdAt': msg['createdAt'].toString(),  // Thêm timestamp vào tin nhắn cũ
           };
         }).toList();
       } else {
