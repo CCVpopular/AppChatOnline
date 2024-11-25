@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:appchatonline/config/config.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -14,6 +15,7 @@ class FriendRequestsScreen extends StatefulWidget {
 class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
   List<Map<String, dynamic>> friendRequests = [];
   bool isLoading = true;
+  final String baseUrl = Config.apiBaseUrl;
 
   @override
   void initState() {
@@ -23,7 +25,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
 
   Future<void> _loadFriendRequests() async {
     try {
-      final url = Uri.parse('http://26.113.132.145:3000/api/friends/friend-requests/${widget.userId}');
+      final url = Uri.parse('http://$baseUrl/api/friends/friend-requests/${widget.userId}');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
@@ -51,7 +53,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
 
   Future<void> _acceptRequest(String requestId) async {
     try {
-      final url = Uri.parse('http://26.113.132.145:3000/api/friends/accept-friend');
+      final url = Uri.parse('http://$baseUrl/api/friends/accept-friend');
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
