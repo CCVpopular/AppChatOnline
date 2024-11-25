@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:appchatonline/screens/video_call_screen.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:image_picker/image_picker.dart';
 import '../services/chat_service.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -59,6 +63,24 @@ class _ChatScreenState extends State<ChatScreen> {
       print('Error loading messages: $e');
     }
   }
+  Future<void> _selectFile() async {
+    final result = await FilePicker.platform.pickFiles();
+    if (result != null && result.files.isNotEmpty) {
+      final file = result.files.first;
+      chatService.sendFile(file);
+    }
+  }
+  Future<void> _selectImage() async {
+    final picker = ImagePicker();
+    final pickedImage = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedImage != null) {
+      final file = File(pickedImage.path);
+    
+      chatService.sendFile(file as PlatformFile);
+    }
+  }
+
+
 
   void _sendMessage() {
     if (_controller.text.isNotEmpty) {
@@ -115,7 +137,22 @@ class _ChatScreenState extends State<ChatScreen> {
                                 : Colors.grey[300],
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Text(message['message']!),
+                          child: message.containsKey('fileUrl')
+                              ? Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if(message['message'] != null)
+                                      Text(message['messgae'] !),
+                                  const SizedBox(height: 8.0),
+                                  if(message['fileUrl'] != null)
+                                    Image.network(
+                                      message['fileUrl']!,
+                                      height: 200,
+                                      fit: BoxFit.cover,
+                                    ),    
+                                ],
+                              )
+                          : Text(message['message'] ?? ''),
                         ),
                       );
                     },
@@ -130,6 +167,10 @@ class _ChatScreenState extends State<ChatScreen> {
                     controller: _controller,
                     decoration: const InputDecoration(hintText: 'Enter a message'),
                   ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.attach_file),
+                  onPressed: _selectFile, 
                 ),
                 IconButton(
                   icon: const Icon(Icons.send),
