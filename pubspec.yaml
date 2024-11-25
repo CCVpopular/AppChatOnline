@@ -42,6 +42,8 @@ dependencies:
   path_provider: ^2.0.14
   file_picker: ^5.0.0
   image_picker: ^0.8.7
+  flutter_chat_ui: ^1.6.15 #thư viện cho ui của chat flutter
+  flutter_chat_types: ^1.6.15
 
 dev_dependencies:
   flutter_test:
