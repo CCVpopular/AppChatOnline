@@ -7,6 +7,8 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/chat_service.dart';
 import 'package:intl/intl.dart'; // thư viện định dạng thời gian hiện trong phần tin nhắn
+import 'package:flutter_chat_ui/flutter_chat_ui.dart';
+import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 
 class ChatScreen extends StatefulWidget {
   final String userId;
@@ -118,7 +120,23 @@ class _ChatScreenState extends State<ChatScreen> {
     Intl.defaultLocale = 'vi'; // Đặt ngôn ngữ mặc định thành tiếng Việt
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Chat')),
+      appBar: AppBar(
+        title: const Text('Chat'),
+        backgroundColor: Colors.transparent,   // Màu của AppBar
+        elevation: 4.0, // Tạo hiệu ứng đổ bóng cho AppBar
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color.fromARGB(207, 70, 131, 180),  // Màu thứ hai
+                Color.fromARGB(41, 130, 190, 197), // Màu đầu tiên
+              ],
+            ),
+          ),
+        ),
+      ),
       body: Column(
         children: [
           Expanded(
@@ -158,7 +176,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               padding: const EdgeInsets.all(12.0),
                               decoration: BoxDecoration(
                                 color: isCurrentUser
-                                    ? const Color.fromARGB(255, 12, 181, 164)
+                                    ? const Color.fromARGB(145, 130, 190, 197)
                                     : Colors.grey[300],
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -185,7 +203,8 @@ class _ChatScreenState extends State<ChatScreen> {
                             const Padding(
                               padding: EdgeInsets.only(left: 4.0, right: 8.0),
                               child: CircleAvatar(
-                                backgroundColor: Color.fromARGB(255, 3, 62, 72), // Màu xanh cho avatar
+                                backgroundColor:
+                                    Color.fromARGB(255, 3, 62, 72), // Màu xanh cho avatar
                                 radius: 20, // Kích thước avatar
                                 child: Icon(
                                   Icons.person, // Biểu tượng người dùng
@@ -200,27 +219,59 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
           ),
 
+          // Khung nhập tin nhắn
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
               children: [
+                // Thanh ngoài của TextField với Gradient
                 Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: const InputDecoration(hintText: 'Enter a message'),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),  // Padding cho viền
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color.fromARGB(176, 70, 131, 180),  // Màu thứ hai của gradient
+                          Color.fromARGB(39, 130, 190, 197), // Màu đầu tiên của gradient
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(15),  // Bo góc cho thanh ngoài
+                    ),
+                    child: TextField(
+                      controller: _controller,
+                      decoration: const InputDecoration(
+                        hintText: 'Enter a message',
+                        border: InputBorder.none,  // Loại bỏ viền mặc định của TextField
+                        contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                      ),
+                    ),
                   ),
                 ),
+
+                // Nút gửi file với hiệu ứng màu nền
                 IconButton(
                   icon: const Icon(Icons.attach_file),
-                  onPressed: _selectFile, 
+                  onPressed: _selectFile,
+                  iconSize: 30,
+                  color: Color.fromARGB(227, 130, 190, 197), // Màu cho icon
                 ),
+
+                // Nút gửi tin nhắn với hiệu ứng màu nền
                 IconButton(
                   icon: const Icon(Icons.send),
                   onPressed: _sendMessage,
+                  iconSize: 30,
+                  color: Color.fromARGB(227, 130, 190, 197), // Màu cho icon
                 ),
+
+                // Nút gọi video với hiệu ứng màu nền
                 IconButton(
                   icon: const Icon(Icons.video_call),
-                  onPressed: _startVideoCall,  // Thêm nút gọi video
+                  onPressed: _startVideoCall,
+                  iconSize: 30,
+                  color: Color.fromARGB(227, 130, 190, 197), // Màu cho icon
                 ),
               ],
             ),
