@@ -1,4 +1,10 @@
+import 'dart:io';
+
+import 'package:appchatonline/screens/video_call_screen.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:image_picker/image_picker.dart';
 import '../services/chat_service.dart';
 import 'package:intl/intl.dart'; // thư viện định dạng thời gian hiện trong phần tin nhắn
 
@@ -6,11 +12,15 @@ class ChatScreen extends StatefulWidget {
   final String userId;
   final String friendId;
 
-  const ChatScreen({Key? key, required this.userId, required this.friendId}) : super(key: key);
+  const ChatScreen({super.key, required this.userId, required this.friendId});
 
   @override
     _ChatScreenState createState() => _ChatScreenState();
   }
+
+// Khởi tạo RTCVideoRenderer
+  late RTCVideoRenderer localRenderer;
+  late RTCVideoRenderer remoteRenderer;
 
 class _ChatScreenState extends State<ChatScreen> {
   late ChatService chatService;
@@ -22,6 +32,10 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+
+    // Khởi tạo các đối tượng video renderer
+    localRenderer = RTCVideoRenderer();
+    remoteRenderer = RTCVideoRenderer();
 
     // Khởi tạo ChatService
     chatService = ChatService(widget.userId, widget.friendId);
@@ -51,6 +65,24 @@ class _ChatScreenState extends State<ChatScreen> {
       print('Error loading messages: $e');
     }
   }
+  Future<void> _selectFile() async {
+    final result = await FilePicker.platform.pickFiles();
+    if (result != null && result.files.isNotEmpty) {
+      final file = result.files.first;
+      chatService.sendFile(file);
+    }
+  }
+  Future<void> _selectImage() async {
+    final picker = ImagePicker();
+    final pickedImage = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedImage != null) {
+      final file = File(pickedImage.path);
+    
+      chatService.sendFile(file as PlatformFile);
+    }
+  }
+
+
 
   void _sendMessage() {
     if (_controller.text.isNotEmpty) {
@@ -59,9 +91,25 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  void _startVideoCall() {
+    print("Navigating to video call screen...");  // Thêm log
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => VideoCallScreen(
+          userId: widget.userId,
+          friendId: widget.friendId,
+          localRenderer: localRenderer,  
+          remoteRenderer: remoteRenderer, 
+        ),
+      ),
+    );
+  }
   @override
   void dispose() {
     chatService.dispose();
+    localRenderer.dispose();  
+    remoteRenderer.dispose(); 
     super.dispose();
   }
 
@@ -70,27 +118,17 @@ class _ChatScreenState extends State<ChatScreen> {
     Intl.defaultLocale = 'vi'; // Đặt ngôn ngữ mặc định thành tiếng Việt
 
     return Scaffold(
-      appBar: AppBar(title: Text('Chat')),
+      appBar: AppBar(title: const Text('Chat')),
       body: Column(
         children: [
           Expanded(
             child: isLoading
-              ? Center(child: CircularProgressIndicator())
-              : ListView.builder(
-                itemCount: messages.length,
-                itemBuilder: (context, index) {
-                  final message = messages[index];
-                  print('Message object: $message');
-                  message.forEach((key, value) {
-                    print('$key: $value');
-                  });
-
-                  return Column(
-                    crossAxisAlignment: message['sender'] == widget.userId
-                        ? CrossAxisAlignment.end
-                        : CrossAxisAlignment.start,
-                    children: [
-                      Align(
+                ? const Center(child: CircularProgressIndicator())
+                : ListView.builder(
+                    itemCount: messages.length,
+                    itemBuilder: (context, index) {
+                      final message = messages[index];
+                      return Align(
                         alignment: message['sender'] == widget.userId
                             ? Alignment.centerRight
                             : Alignment.centerLeft,
@@ -101,51 +139,28 @@ class _ChatScreenState extends State<ChatScreen> {
                             color: message['sender'] == widget.userId
                                 ? const Color.fromARGB(255, 12, 181, 164)
                                 : Colors.grey[300],
-                            borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(10),
-                              topRight: Radius.circular(10),
-                              bottomLeft: message['sender'] == widget.userId
-                                  ? Radius.circular(10)
-                                  : Radius.zero,
-                              bottomRight: message['sender'] == widget.userId
-                                  ? Radius.zero
-                                  : Radius.circular(10),
-                            ),
-                            border: Border.all(
-                              color: message['sender'] == widget.userId
-                                  ? const Color.fromARGB(255, 12, 181, 164)
-                                  : Colors.grey[500]!,
-                              width: 2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 0,
-                                offset: Offset(5, 9),
-                              ),
-                            ],
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Text(
-                            message['message']!,
-                            style: TextStyle(
-                              color: message['sender'] == widget.userId
-                                  ? Colors.white
-                                  : Colors.black,
-                            ),
-                          ),
+                          child: message.containsKey('fileUrl')
+                              ? Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if(message['message'] != null)
+                                      Text(message['messgae'] !),
+                                  const SizedBox(height: 8.0),
+                                  // if(message['fileUrl'] != null)
+                                    Image.network(
+                                      message['fileUrl']!,
+                                      height: 200,
+                                      fit: BoxFit.cover,
+                                    ),    
+                                ],
+                              )
+                          : Text(message['message'] ?? ''),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                        child: Text(
-                          message['createdAt'] ?? 'No date found', // Hiển thị thời gian gốc mà không chuyển đổi
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
+                      );
+                    },
+                  ),
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -154,12 +169,20 @@ class _ChatScreenState extends State<ChatScreen> {
                 Expanded(
                   child: TextField(
                     controller: _controller,
-                    decoration: InputDecoration(hintText: 'Enter a message'),
+                    decoration: const InputDecoration(hintText: 'Enter a message'),
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.send),
+                  icon: const Icon(Icons.attach_file),
+                  onPressed: _selectFile, 
+                ),
+                IconButton(
+                  icon: const Icon(Icons.send),
                   onPressed: _sendMessage,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.video_call),
+                  onPressed: _startVideoCall,  // Thêm nút gọi video
                 ),
               ],
             ),

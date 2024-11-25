@@ -6,13 +6,12 @@ class LoginScreen extends StatelessWidget {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
+  LoginScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Login'),
-        centerTitle: true, // Căn giữa tiêu đề
-      ),
+      appBar: AppBar(title: const Text('Login')),
       body: Padding(
         padding: const EdgeInsets.all(80.0),
         child: Column(
@@ -26,13 +25,14 @@ class LoginScreen extends StatelessWidget {
             ),
             TextField(
               controller: usernameController,
-              decoration: InputDecoration(labelText: 'Username'),
+              decoration: const InputDecoration(labelText: 'Username'),
             ),
             TextField(
               controller: passwordController,
               obscureText: true,
-              decoration: InputDecoration(labelText: 'Password'),
+              decoration: const InputDecoration(labelText: 'Password'),
             ),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
                 try {
@@ -53,11 +53,11 @@ class LoginScreen extends StatelessWidget {
                   );
                 }
               },
-              child: Text('Login'),
+              child: const Text('Login'),
             ),
             TextButton(
               onPressed: () => Navigator.pushNamed(context, '/register'),
-              child: Text('Don\'t have an account? Register'),
+              child: const Text('Don\'t have an account? Register'),
             ),
           ],
         ),

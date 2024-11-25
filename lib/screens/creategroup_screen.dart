@@ -1,3 +1,4 @@
+import 'package:appchatonline/config/config.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -14,6 +15,7 @@ class CreateGroupScreen extends StatefulWidget {
 class _CreateGroupScreenState extends State<CreateGroupScreen> {
   final TextEditingController _groupNameController = TextEditingController();
   final List<String> _selectedMembers = []; // Store selected members
+  final String baseUrl = Config.apiBaseUrl;
 
   // Mocked list of friends (replace with API fetch)
   final List<Map<String, String>> _friends = [
@@ -32,7 +34,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     }
 
     try {
-      final url = Uri.parse('http://YOUR_SERVER_URL/api/groups/create');
+      final url = Uri.parse('$baseUrl/api/groups/create');
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -42,7 +44,8 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           'members': _selectedMembers,
         }),
       );
-
+      print(url);
+      print(response.statusCode);
       if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Group created successfully')),

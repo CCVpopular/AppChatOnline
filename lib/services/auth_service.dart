@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import '../config/config.dart';
 
 class AuthService {
+
   final String baseUrl = Config.apiBaseUrl;
 
   Future<Map<String, dynamic>> login(String username, String password) async {

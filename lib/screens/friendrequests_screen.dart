@@ -1,11 +1,12 @@
 import 'dart:convert';
+import 'package:appchatonline/config/config.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class FriendRequestsScreen extends StatefulWidget {
   final String userId;
 
-  const FriendRequestsScreen({Key? key, required this.userId}) : super(key: key);
+  const FriendRequestsScreen({super.key, required this.userId});
 
   @override
   _FriendRequestsScreenState createState() => _FriendRequestsScreenState();
@@ -14,6 +15,7 @@ class FriendRequestsScreen extends StatefulWidget {
 class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
   List<Map<String, dynamic>> friendRequests = [];
   bool isLoading = true;
+  final String baseUrl = Config.apiBaseUrl;
 
   @override
   void initState() {
@@ -23,9 +25,8 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
 
   Future<void> _loadFriendRequests() async {
     try {
-      final url = Uri.parse('http://26.113.132.145:3000/api/friends/friend-requests/${widget.userId}');
+      final url = Uri.parse('$baseUrl/api/friends/friend-requests/${widget.userId}');
       final response = await http.get(url);
-
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         setState(() {
@@ -51,7 +52,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
 
   Future<void> _acceptRequest(String requestId) async {
     try {
-      final url = Uri.parse('http://26.113.132.145:3000/api/friends/accept-friend');
+      final url = Uri.parse('$baseUrl/api/friends/accept-friend');
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -60,7 +61,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Friend request accepted!')),
+          const SnackBar(content: Text('Friend request accepted!')),
         );
         setState(() {
           friendRequests.removeWhere((req) => req['id'] == requestId);
@@ -82,12 +83,12 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Friend Requests'),
+        title: const Text('Friend Requests'),
       ),
       body: isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : friendRequests.isEmpty
-              ? Center(child: Text('No friend requests'))
+              ? const Center(child: Text('No friend requests'))
               : ListView.builder(
                   itemCount: friendRequests.length,
                   itemBuilder: (context, index) {
@@ -96,7 +97,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                       title: Text(request['username']),
                       trailing: ElevatedButton(
                         onPressed: () => _acceptRequest(request['id']),
-                        child: Text('Accept'),
+                        child: const Text('Accept'),
                       ),
                     );
                   },
