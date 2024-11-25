@@ -1,3 +1,4 @@
+import 'package:appchatonline/screens/group_list_screen.dart';
 import 'package:flutter/material.dart';
 import '../services/friend_service.dart';
 import 'addfriend_screen.dart';
@@ -39,6 +40,17 @@ class _FriendsScreenState extends State<FriendsScreen> {
             icon: Icon(Icons.refresh),
             onPressed: () {
               friendService.getFriends(widget.userId);
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.person_add),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => GroupListScreen(userId: widget.userId),
+                ),
+              );
             },
           ),
           IconButton(

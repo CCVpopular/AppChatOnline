@@ -6,7 +6,8 @@ const authRoutes = require('./routes/authRoutes');
 const friendRoutes = require('./routes/friendRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const Message = require('./models/Message');
-const userRoutes = require('./routes/userRoutes')
+const userRoutes = require('./routes/userRoutes');
+const roomRoutes = require('./routes/roomRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -26,10 +27,13 @@ app.set('socketio', io);
 app.use(express.json());
 
 // Routes
+
+
 app.use('/api/auth', authRoutes);
 app.use('/api/friends', friendRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/rooms', roomRoutes);
 
 io.on('connection', (socket) => {
   console.log('New client connected');
@@ -74,6 +78,24 @@ io.on('connection', (socket) => {
     const roomName = [userId, friendId].sort().join('_');
     socket.leave(roomName);
     console.log(`${userId} left room ${roomName}`);
+  });
+
+
+  // Join a group
+  socket.on('joinGroup', ({ groupId, userId }) => {
+    socket.join(groupId);
+    console.log(`${userId} joined group: ${groupId}`);
+    socket.to(groupId).emit('userJoined', `${userId} has joined the group.`);
+  });
+
+  // Send a message to a group
+  socket.on('sendGroupMessage', async ({ groupId, sender, message }) => {
+    try {
+      // Emit the message to the group
+      io.to(groupId).emit('receiveGroupMessage', { sender, message });
+    } catch (err) {
+      console.error('Error sending group message:', err);
+    }
   });
   
 
