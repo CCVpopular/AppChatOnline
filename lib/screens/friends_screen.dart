@@ -14,12 +14,12 @@ class FriendsScreen extends StatefulWidget {
 }
 
 class _FriendsScreenState extends State<FriendsScreen> {
-  final FriendService friendService = FriendService();
+  late FriendService friendService;
 
   @override
   void initState() {
     super.initState();
-    // Tải danh sách bạn bè ban đầu
+    friendService = FriendService();
     friendService.getFriends(widget.userId);
   }
 
@@ -38,8 +38,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
           IconButton(
             icon: Icon(Icons.refresh),
             onPressed: () {
-              friendService
-                  .getFriends(widget.userId); // Tải lại danh sách bạn bè
+              friendService.getFriends(widget.userId);
             },
           ),
           IconButton(
@@ -80,35 +79,42 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
           final friends = snapshot.data ?? [];
 
-          return ListView.builder(
-            itemCount: friends.length,
-            itemBuilder: (context, index) {
-              final friend = friends[index];
-              final friendUsername = friend['requester']['_id'] == widget.userId
-                  ? friend['receiver']['username']
-                  : friend['requester']['username'];
+          if (friends.isEmpty) {
+            return Center(child: Text('No friends yet'));
+          }
+return ListView.builder(
+  itemCount: friends.length,
+  itemBuilder: (context, index) {
+    final friend = friends[index];
 
-              return ListTile(
-                title: Text(friendUsername),
-                onTap: friend['status'] == 'accepted'
-                    ? () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ChatScreen(
-                              userId: widget.userId,
-                              friendId:
-                                  friend['requester']['_id'] == widget.userId
-                                      ? friend['receiver']['_id']
-                                      : friend['requester']['_id'],
-                            ),
-                          ),
-                        );
-                      }
-                    : null,
-              );
-            },
-          );
+    // Kiểm tra cấu trúc của `friend`
+    final friendRequester = friend['requester'] as Map<String, dynamic>? ?? {};
+    final friendReceiver = friend['receiver'] as Map<String, dynamic>? ?? {};
+    final friendUsername = friendRequester['_id'] == widget.userId
+        ? (friendReceiver['username'] ?? 'Unknown')
+        : (friendRequester['username'] ?? 'Unknown');
+
+    return ListTile(
+      title: Text(friendUsername),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatScreen(
+              userId: widget.userId,
+              friendId: friendRequester['_id'] == widget.userId
+                  ? friendReceiver['_id'] ?? ''
+                  : friendRequester['_id'] ?? '',
+            ),
+          ),
+        );
+      },
+    );
+  },
+);
+
+
+
         },
       ),
 
