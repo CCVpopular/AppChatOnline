@@ -144,7 +144,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                   if(message['message'] != null)
                                       Text(message['messgae'] !),
                                   const SizedBox(height: 8.0),
-                                  if(message['fileUrl'] != null)
+                                  // if(message['fileUrl'] != null)
                                     Image.network(
                                       message['fileUrl']!,
                                       height: 200,
