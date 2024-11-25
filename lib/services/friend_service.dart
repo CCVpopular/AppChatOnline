@@ -67,7 +67,6 @@ class FriendService {
     _friendsController.add(List.from(_friends)); // Tạo một danh sách mới để StreamBuilder nhận thay đổi
   }
 
-
   // void dispose() {
   //   _socket?.dispose();
   //   _friendsController.close();

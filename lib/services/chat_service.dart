@@ -50,7 +50,7 @@ ChatService(this.userId, this.friendId) {
 
   // Hàm lấy tin nhắn cũ
   Future<List<Map<String, String>>> loadMessages() async {
-    final url = Uri.parse('http://$baseUrl/api/messages/messages/$userId/$friendId');
+    final url = Uri.parse('$baseUrl/api/messages/messages/$userId/$friendId');
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {

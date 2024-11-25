@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:appchatonline/config/config.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -15,6 +16,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> searchResults = [];
   bool isLoading = false;
+  final String baseUrl = Config.apiBaseUrl;
 
   // Hàm tìm kiếm bạn bè
   Future<void> _searchUsers(String username) async {
@@ -24,7 +26,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     });
 
     try {
-      final url = Uri.parse('http://26.113.132.145:3000/api/users/search/$username');
+      final url = Uri.parse('$baseUrl/api/users/search/$username');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
@@ -50,7 +52,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   // Hàm gửi yêu cầu kết bạn
   Future<void> _sendFriendRequest(String receiverId) async {
     try {
-      final url = Uri.parse('http://26.113.132.145:3000/api/friends/add-friend');
+      final url = Uri.parse('$baseUrl/api/friends/add-friend');
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
