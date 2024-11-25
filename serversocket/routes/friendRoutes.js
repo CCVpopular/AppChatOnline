@@ -51,7 +51,8 @@ router.get('/friends/:userId', async (req, res) => {
     const friends = await Friendship.find({
       $or: [{ requester: userId }, { receiver: userId }],
       status: 'accepted',
-    }).populate('requester receiver', 'username');  // Lọc chỉ lấy trường 'username'
+    })      .populate('requester', 'username') // Lấy thông tin `username` từ bảng User
+    .populate('receiver', 'username');
     res.send(friends);
   } catch (err) {
     res.status(500).send({ error: 'Failed to fetch friends' });
@@ -59,11 +60,30 @@ router.get('/friends/:userId', async (req, res) => {
 });
 
 
-// Xác nhận yêu cầu kết bạn
+// // Xác nhận yêu cầu kết bạn
+// router.post('/accept-friend', async (req, res) => {
+//   const { friendshipId } = req.body;
+//   try {
+//     const friendship = await Friendship.findById(friendshipId);
+
+//     if (!friendship || friendship.status !== 'pending') {
+//       return res.status(400).send({ error: 'Friendship is not pending' });
+//     }
+
+//     friendship.status = 'accepted';
+//     await friendship.save();
+//     res.send('Friend request accepted');
+//   } catch (err) {
+//     res.status(500).send({ error: 'Failed to accept friend request' });
+//   }
+// });
+
+
 router.post('/accept-friend', async (req, res) => {
   const { friendshipId } = req.body;
   try {
-    const friendship = await Friendship.findById(friendshipId);
+    const friendship = await Friendship.findById(friendshipId).populate('requester', 'username') // Lấy thông tin `username` từ bảng User
+    .populate('receiver', 'username');;
 
     if (!friendship || friendship.status !== 'pending') {
       return res.status(400).send({ error: 'Friendship is not pending' });
@@ -71,11 +91,16 @@ router.post('/accept-friend', async (req, res) => {
 
     friendship.status = 'accepted';
     await friendship.save();
-    res.send('Friend request accepted');
+
+    // Phát sự kiện qua socket.io để cập nhật danh sách bạn bè
+    const io = req.app.get('socketio');
+    io.emit('friendshipUpdated', friendship);
+
+    res.send('Friend request accepted'+ friendship);
   } catch (err) {
+    console.error('Error accepting friend request:', err);
     res.status(500).send({ error: 'Failed to accept friend request' });
   }
 });
-
 
 module.exports = router;
