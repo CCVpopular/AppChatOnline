@@ -13,7 +13,7 @@ class LoginScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Login'),
-        backgroundColor: Colors.transparent,   // Màu của AppBar
+        backgroundColor: Colors.transparent, // Màu của AppBar
         elevation: 4.0, // Tạo hiệu ứng đổ bóng cho AppBar
         flexibleSpace: Container(
           decoration: const BoxDecoration(
@@ -21,7 +21,7 @@ class LoginScreen extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Color.fromARGB(207, 70, 131, 180),  // Màu thứ hai
+                Color.fromARGB(207, 70, 131, 180), // Màu thứ hai
                 Color.fromARGB(41, 130, 190, 197), // Màu đầu tiên
               ],
             ),
@@ -36,7 +36,7 @@ class LoginScreen extends StatelessWidget {
             //logo
             Icon(
               Icons.message,
-              size: 100,
+              size: 50,
               color: Theme.of(context).colorScheme.primary,
             ),
             TextField(
@@ -60,7 +60,8 @@ class LoginScreen extends StatelessWidget {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => FriendsScreen(userId: user['userId']),
+                      builder: (context) =>
+                          FriendsScreen(userId: user['userId']),
                     ),
                   );
                 } catch (e) {

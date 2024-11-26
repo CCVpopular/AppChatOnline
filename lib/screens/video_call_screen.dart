@@ -23,13 +23,14 @@ class VideoCallScreen extends StatefulWidget {
 class _VideoCallScreenState extends State<VideoCallScreen> {
   bool isMicrophoneMuted = false;
   bool isCameraOff = false;
+  MediaStream? _localStream;
 
   @override
   void initState() {
     super.initState();
     widget.localRenderer.initialize();
     widget.remoteRenderer.initialize();
-    requestPermissions(); // Yêu cầu quyền khi màn hình khởi tạo
+    requestPermissions();
     _initiateCall();
   }
 
@@ -39,10 +40,8 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     var micStatus = await Permission.microphone.request();
 
     if (cameraStatus.isGranted && micStatus.isGranted) {
-      // Nếu quyền đã được cấp, bạn có thể tiếp tục gọi WebRTC
       print("Permissions granted");
     } else {
-      // Xử lý trường hợp quyền bị từ chối
       print("Permissions denied");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -55,8 +54,6 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
   }
 
   void _initiateCall() async {
-    await widget.localRenderer.initialize(); // Khởi tạo renderer trước
-    await widget.remoteRenderer.initialize(); // Khởi tạo renderer trước
     final mediaConstraints = {
       'audio': true,
       'video': {
@@ -67,13 +64,22 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     try {
       MediaStream localStream =
           await navigator.mediaDevices.getUserMedia(mediaConstraints);
+      _localStream = localStream; // Lưu trữ stream cục bộ
       widget.localRenderer.srcObject = localStream;
       print("Local stream initialized: ${localStream.id}");
     } catch (e) {
       print("Error initializing camera: $e");
     }
 
-    // Thực hiện các kết nối WebRTC khác như kết nối với friendId để gửi stream video đi
+    // Thực hiện các kết nối WebRTC khác
+  }
+
+  @override
+  void dispose() {
+    widget.localRenderer.dispose();
+    widget.remoteRenderer.dispose();
+    _localStream?.dispose();
+    super.dispose();
   }
 
   @override
@@ -81,16 +87,16 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Video Call'),
-        backgroundColor: Colors.transparent,   // Màu của AppBar
-        elevation: 4.0, // Tạo hiệu ứng đổ bóng cho AppBar
+        backgroundColor: Colors.transparent,
+        elevation: 4.0,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Color.fromARGB(207, 70, 131, 180),  // Màu thứ hai
-                Color.fromARGB(41, 130, 190, 197), // Màu đầu tiên
+                Color.fromARGB(207, 70, 131, 180),
+                Color.fromARGB(41, 130, 190, 197),
               ],
             ),
           ),
@@ -108,20 +114,49 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
       ),
       body: Stack(
         children: [
+          // Hiển thị video của người khác (remote video)
           Positioned.fill(
             child: widget.remoteRenderer.srcObject != null
                 ? RTCVideoView(widget.remoteRenderer)
-                : Container(
-                    color: Colors
-                        .black), // Hiển thị màn hình đen nếu chưa có dữ liệu
+                : Container(color: Colors.black),
           ),
+          // Hiển thị video của bản thân (local video) với khung hình đẹp hơn
           Positioned(
             bottom: 20,
             right: 20,
-            width: 100,
-            height: 150,
-            child: RTCVideoView(widget.localRenderer,
-                mirror: true), // Video của người dùng
+            child: Container(
+              width: 100,
+              height: 150,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16), // Bo tròn góc
+                border: Border.all(color: Colors.white, width: 2), // Viền trắng
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4), // Đổ bóng nhẹ
+                  ),
+                ],
+              ),
+              child: isCameraOff
+                  ? Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        color: Colors.black,
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.videocam_off,
+                          color: Colors.white,
+                          size: 40,
+                        ),
+                      ),
+                    )
+                  : ClipRRect(
+                      borderRadius: BorderRadius.circular(16), // Cắt góc video
+                      child: RTCVideoView(widget.localRenderer, mirror: true),
+                    ),
+            ),
           ),
           _buildControlPanel(),
         ],
@@ -134,7 +169,10 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     setState(() {
       isMicrophoneMuted = !isMicrophoneMuted;
     });
-    // Thực hiện tắt/bật micro nếu cần
+    if (_localStream != null) {
+      var audioTrack = _localStream!.getAudioTracks().first;
+      audioTrack.enabled = !isMicrophoneMuted;
+    }
   }
 
   // Nút điều khiển camera
@@ -142,7 +180,10 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     setState(() {
       isCameraOff = !isCameraOff;
     });
-    // Thực hiện tắt/bật camera nếu cần
+    if (_localStream != null) {
+      var videoTrack = _localStream!.getVideoTracks().first;
+      videoTrack.enabled = !isCameraOff;
+    }
   }
 
   // Tạo điều khiển thêm
@@ -170,11 +211,22 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
 
   // Kết thúc cuộc gọi
   void _endCall() {
+    _localStream?.dispose();
     Navigator.pop(context);
   }
 
   // Chuyển đổi camera (nếu hỗ trợ)
-  void _switchCamera() {
-    // Sử dụng API WebRTC để chuyển đổi camera nếu cần
+  void _switchCamera() async {
+    if (_localStream != null) {
+      var videoTrack = _localStream!.getVideoTracks().first;
+      if (videoTrack != null) {
+        try {
+          await videoTrack.switchCamera();
+          print("Camera switched successfully");
+        } catch (e) {
+          print("Error switching camera: $e");
+        }
+      }
+    }
   }
 }
