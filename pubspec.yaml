@@ -42,10 +42,17 @@ dependencies:
   path_provider: ^2.0.14
   file_picker: ^5.0.0
   image_picker: ^0.8.7
+  flutter_chat_ui: ^1.6.15 #thư viện cho ui của chat flutter
+  flutter_chat_types: ^3.6.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  
+  intl: ^0.18.0
+  # đây là thư viện định dạng lại thời gian
+  # có thể thư chạy lệnh 'dart pub get'
+
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
