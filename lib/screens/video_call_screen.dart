@@ -76,9 +76,16 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
 
   @override
   void dispose() {
-    widget.localRenderer.dispose();
-    widget.remoteRenderer.dispose();
-    _localStream?.dispose();
+    // Kiểm tra nếu renderer đã được khởi tạo trước khi dispose
+    if (widget.localRenderer.srcObject != null) {
+      widget.localRenderer.srcObject = null; // Ngắt kết nối stream
+    }
+    if (widget.remoteRenderer.srcObject != null) {
+      widget.remoteRenderer.srcObject = null; // Ngắt kết nối stream
+    }
+    widget.localRenderer.dispose(); // Dispose local renderer
+    widget.remoteRenderer.dispose(); // Dispose remote renderer
+    _localStream?.dispose(); // Dispose local stream
     super.dispose();
   }
 
@@ -124,39 +131,33 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
           Positioned(
             bottom: 20,
             right: 20,
-            child: Container(
-              width: 100,
-              height: 150,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16), // Bo tròn góc
-                border: Border.all(color: Colors.white, width: 2), // Viền trắng
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4), // Đổ bóng nhẹ
-                  ),
-                ],
-              ),
-              child: isCameraOff
-                  ? Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        color: Colors.black,
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.videocam_off,
-                          color: Colors.white,
-                          size: 40,
+            child: widget.localRenderer.renderVideo
+                ? Container(
+                    width: 100,
+                    height: 150,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
                         ),
-                      ),
-                    )
-                  : ClipRRect(
-                      borderRadius: BorderRadius.circular(16), // Cắt góc video
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
                       child: RTCVideoView(widget.localRenderer, mirror: true),
                     ),
-            ),
+                  )
+                : Container(
+                    width: 100,
+                    height: 150,
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.videocam_off,
+                        size: 40, color: Colors.white),
+                  ),
           ),
           _buildControlPanel(),
         ],
