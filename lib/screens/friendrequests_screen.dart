@@ -25,7 +25,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
 
   Future<void> _loadFriendRequests() async {
     try {
-      final url = Uri.parse('$baseUrl/api/friends/friend-requests/${widget.userId}');
+      final url = Uri.parse('http://$baseUrl/api/friends/friend-requests/${widget.userId}');
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
@@ -52,7 +52,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
 
   Future<void> _acceptRequest(String requestId) async {
     try {
-      final url = Uri.parse('$baseUrl/api/friends/accept-friend');
+      final url = Uri.parse('http://$baseUrl/api/friends/accept-friend');
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
