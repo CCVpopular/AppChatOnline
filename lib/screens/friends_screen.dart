@@ -1,4 +1,3 @@
-import 'package:appchatonline/screens/group_list_screen.dart';
 import 'package:flutter/material.dart';
 import '../services/friend_service.dart';
 import 'addfriend_screen.dart';
@@ -8,7 +7,7 @@ import 'friendrequests_screen.dart';
 class FriendsScreen extends StatefulWidget {
   final String userId;
 
-  const FriendsScreen({super.key, required this.userId});
+  const FriendsScreen({Key? key, required this.userId}) : super(key: key);
 
   @override
   _FriendsScreenState createState() => _FriendsScreenState();
@@ -34,10 +33,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Friends'),
+        title: Text('Friends'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: Icon(Icons.refresh),
             onPressed: () {
               friendService.getFriends(widget.userId);
             },
@@ -48,24 +47,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => GroupListScreen(userId: widget.userId),
-                ),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.person_add),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
                   builder: (context) => AddFriendScreen(userId: widget.userId),
                 ),
               );
             },
           ),
           IconButton(
-            icon: const Icon(Icons.group),
+            icon: Icon(Icons.group),
             onPressed: () {
               Navigator.push(
                 context,
@@ -82,11 +70,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
         stream: friendService.friendsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
-            return const Center(child: Text('Failed to load friends'));
+            return Center(child: Text('Failed to load friends'));
           }
 
           final friends = snapshot.data ?? [];

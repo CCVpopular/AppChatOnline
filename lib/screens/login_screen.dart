@@ -6,26 +6,24 @@ class LoginScreen extends StatelessWidget {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  LoginScreen({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
+      appBar: AppBar(title: Text('Login')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             TextField(
               controller: usernameController,
-              decoration: const InputDecoration(labelText: 'Username'),
+              decoration: InputDecoration(labelText: 'Username'),
             ),
             TextField(
               controller: passwordController,
               obscureText: true,
-              decoration: const InputDecoration(labelText: 'Password'),
+              decoration: InputDecoration(labelText: 'Password'),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
                 try {
@@ -46,11 +44,11 @@ class LoginScreen extends StatelessWidget {
                   );
                 }
               },
-              child: const Text('Login'),
+              child: Text('Login'),
             ),
             TextButton(
               onPressed: () => Navigator.pushNamed(context, '/register'),
-              child: const Text('Don\'t have an account? Register'),
+              child: Text('Don\'t have an account? Register'),
             ),
           ],
         ),

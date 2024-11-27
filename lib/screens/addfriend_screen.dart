@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 class AddFriendScreen extends StatefulWidget {
   final String userId;
 
-  const AddFriendScreen({super.key, required this.userId});
+  const AddFriendScreen({Key? key, required this.userId}) : super(key: key);
 
   @override
   _AddFriendScreenState createState() => _AddFriendScreenState();
@@ -62,7 +62,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
 
       if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Friend request sent!')),
+          SnackBar(content: Text('Friend request sent!')),
         );
       } else {
         final error = jsonDecode(response.body)['error'] ?? 'Failed to send friend request';
@@ -81,7 +81,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Friend'),
+        title: Text('Add Friend'),
       ),
       body: Column(
         children: [
@@ -92,14 +92,14 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               decoration: InputDecoration(
                 hintText: 'Search by username',
                 suffixIcon: IconButton(
-                  icon: const Icon(Icons.search),
+                  icon: Icon(Icons.search),
                   onPressed: () => _searchUsers(_searchController.text),
                 ),
               ),
             ),
           ),
           isLoading
-              ? const Expanded(
+              ? Expanded(
                   child: Center(child: CircularProgressIndicator()),
                 )
               : Expanded(
@@ -110,7 +110,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       return ListTile(
                         title: Text(user['username']),
                         trailing: IconButton(
-                          icon: const Icon(Icons.person_add),
+                          icon: Icon(Icons.person_add),
                           onPressed: () => _sendFriendRequest(user['id']),
                         ),
                       );

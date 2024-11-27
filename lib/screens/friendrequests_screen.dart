@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 class FriendRequestsScreen extends StatefulWidget {
   final String userId;
 
-  const FriendRequestsScreen({super.key, required this.userId});
+  const FriendRequestsScreen({Key? key, required this.userId}) : super(key: key);
 
   @override
   _FriendRequestsScreenState createState() => _FriendRequestsScreenState();
@@ -25,6 +25,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
     try {
       final url = Uri.parse('http://26.113.132.145:3000/api/friends/friend-requests/${widget.userId}');
       final response = await http.get(url);
+
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         setState(() {
@@ -59,7 +60,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Friend request accepted!')),
+          SnackBar(content: Text('Friend request accepted!')),
         );
         setState(() {
           friendRequests.removeWhere((req) => req['id'] == requestId);
@@ -81,12 +82,12 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Friend Requests'),
+        title: Text('Friend Requests'),
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator())
           : friendRequests.isEmpty
-              ? const Center(child: Text('No friend requests'))
+              ? Center(child: Text('No friend requests'))
               : ListView.builder(
                   itemCount: friendRequests.length,
                   itemBuilder: (context, index) {
@@ -95,7 +96,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                       title: Text(request['username']),
                       trailing: ElevatedButton(
                         onPressed: () => _acceptRequest(request['id']),
-                        child: const Text('Accept'),
+                        child: Text('Accept'),
                       ),
                     );
                   },
