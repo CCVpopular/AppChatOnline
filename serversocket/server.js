@@ -96,12 +96,23 @@ io.on('connection', (socket) => {
     socket.join(groupId);
   });
 
+    // Tham gia phòng nhóm
+    socket.on('leaveGroup', ({ groupId }) => {
+      console.log(`User leave group ${groupId}`);
+      socket.leave(groupId);
+
+    });
+
   // Xử lý gửi tin nhắn nhóm
   socket.on('sendGroupMessage', async ({ groupId, sender, message }) => {
     try {
       // Lưu tin nhắn vào cơ sở dữ liệu
       const groupMessage = new GroupMessage({ groupId, sender, message });
       await groupMessage.save();
+
+      console.log(groupMessage);
+
+      console.log(groupId);
 
       // Phát tin nhắn tới tất cả thành viên trong nhóm
       io.to(groupId).emit('receiveGroupMessage', {

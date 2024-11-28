@@ -2,14 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:socket_io_client/socket_io_client.dart' as IO;
-
 import '../config/config.dart';
 import 'SocketManager.dart';
 
 class GroupChatService {
   final String groupId;
   late IO.Socket socket;
-  final _messagesStreamController =
+  final _messagesgroupStreamController =
       StreamController<List<Map<String, dynamic>>>.broadcast();
   final String baseUrl = Config.apiBaseUrl;
 
@@ -22,15 +21,14 @@ class GroupChatService {
   void _connectSocket() {
     socket = SocketManager(baseUrl).getSocket();
 
-    socket.onConnect((_) {
-      print('Connected to server');
-      socket.emit('joinGroup', {'groupId': groupId});
-    });
+    print('Connected to chat group');
 
     // Lắng nghe tin nhắn mới
     socket.on('receiveGroupMessage', (data) {
-      _addMessageToStream(data);
+      // _addMessageToStream(data);
+      _loadMessages();
     });
+    socket.emit('joinGroup', {'groupId': groupId});
   }
 
   // Tải tin nhắn từ server
@@ -38,7 +36,6 @@ class GroupChatService {
     final url = Uri.parse('$baseUrl/api/groups/group-messages/$groupId');
     try {
       final response = await http.get(url);
-              print(response.statusCode);
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         final messages = data.map((msg) {
@@ -49,8 +46,9 @@ class GroupChatService {
           };
         }).toList();
 
-
-        _messagesStreamController.add(messages);
+        if (!_messagesgroupStreamController.isClosed) {
+          _messagesgroupStreamController.add(messages);
+        }
       } else {
         throw Exception('Failed to load messages');
       }
@@ -59,19 +57,14 @@ class GroupChatService {
     }
   }
 
-  // Thêm tin nhắn mới vào Stream
-void _addMessageToStream(Map<String, dynamic> message) async {
-  // Lấy danh sách tin nhắn hiện tại
-  final currentMessages = await _messagesStreamController.stream.firstWhere((_) => true, orElse: () => []);
+  void _addMessageToStream(Map<String, dynamic> message) async {
+    final currentMessages = await _messagesgroupStreamController.stream
+        .firstWhere((_) => true, orElse: () => []);
 
-  // Kiểm tra nếu StreamController chưa bị đóng
-  if (!_messagesStreamController.isClosed) {
-    _messagesStreamController.add([...currentMessages, message]);
-  } else {
-    print('StreamController is closed, cannot add new message');
+    if (!_messagesgroupStreamController.isClosed) {
+      _messagesgroupStreamController.add([...currentMessages, message]);
+    }
   }
-}
-
 
   // Gửi tin nhắn
   void sendMessage(String sender, String message) {
@@ -83,20 +76,16 @@ void _addMessageToStream(Map<String, dynamic> message) async {
   }
 
   // Stream để lắng nghe tin nhắn
-  Stream<List<Map<String, dynamic>>> get messagesStream =>
-      _messagesStreamController.stream;
+  Stream<List<Map<String, dynamic>>> get messagesgruopStream =>
+      _messagesgroupStreamController.stream;
 
   // Đóng socket và Stream
-void dispose() {
-  // Hủy các sự kiện Socket.IO
-  socket.off('receiveGroupMessage');
-  socket.disconnect();
-  socket.close();
-
-  // Đóng StreamController
-  if (!_messagesStreamController.isClosed) {
-    _messagesStreamController.close();
+  void dispose() {
+    socket.emit('leaveGroup', {'groupId': groupId});
+    socket.off('receiveGroupMessage');
+    socket.disconnect();
+    if (!_messagesgroupStreamController.isClosed) {
+      _messagesgroupStreamController.close();
+    }
   }
-}
-
 }
