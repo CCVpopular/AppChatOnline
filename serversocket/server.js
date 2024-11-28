@@ -100,7 +100,6 @@ io.on('connection', (socket) => {
     socket.on('leaveGroup', ({ groupId }) => {
       console.log(`User leave group ${groupId}`);
       socket.leave(groupId);
-
     });
 
   // Xử lý gửi tin nhắn nhóm

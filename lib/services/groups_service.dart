@@ -21,10 +21,8 @@ import 'SocketManager.dart';
     void _connectSocket() {
       socket = SocketManager(baseUrl).getSocket();
 
-      socket.onConnect((_) {
-        print('Connected to server');
+        print('Connected User to server');
         socket.emit('joinUser', userId); // Tham gia phòng của người dùng
-      });
 
       // Lắng nghe sự kiện cập nhật danh sách nhóm
       socket.on('updateGroups', (_) {
@@ -56,6 +54,12 @@ import 'SocketManager.dart';
         print('Error loading groups: $e');
       }
     }
+
+  void refreshGroups() {
+    // Tải lại danh sách nhóm từ API và cập nhật stream
+    _loadGroups();
+  }
+
 
     // Stream để lắng nghe danh sách nhóm
     Stream<List<Map<String, dynamic>>> get groupsStream => _groupsStreamController.stream;

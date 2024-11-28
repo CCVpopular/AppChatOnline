@@ -1,12 +1,20 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:socket_io_client/socket_io_client.dart' as IO;
+
+import '../config/config.dart';
+import '../services/SocketManager.dart';
 
 class InviteMemberScreen extends StatefulWidget {
   final String groupId;
   final String userId;
+  final String baseUrl = Config.apiBaseUrl;
 
-  const InviteMemberScreen({Key? key, required this.groupId, required this.userId}) : super(key: key);
+
+  const InviteMemberScreen(
+      {Key? key, required this.groupId, required this.userId})
+      : super(key: key);
 
   @override
   _InviteMemberScreenState createState() => _InviteMemberScreenState();
@@ -17,6 +25,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
   List<Map<String, dynamic>> filteredFriends = [];
   bool isLoading = true;
   final TextEditingController _searchController = TextEditingController();
+  late IO.Socket socket;
 
   @override
   void initState() {
@@ -32,7 +41,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
   }
 
   Future<void> _loadFriends() async {
-    final url = Uri.parse('http://26.113.132.145:3000/api/friends/invitefriends/${widget.userId}');
+    final url = Uri.parse('${widget.baseUrl}/api/friends/invitefriends/${widget.userId}');
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
@@ -68,7 +77,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
   }
 
   Future<void> _addToGroup(String friendId) async {
-    final url = Uri.parse('http://26.113.132.145:3000/api/groups/add-member');
+    final url = Uri.parse('${widget.baseUrl}/api/groups/add-member');
     try {
       final response = await http.post(
         url,
@@ -80,11 +89,14 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
       );
 
       if (response.statusCode == 200) {
+        socket = SocketManager(Config.apiBaseUrl).getSocket();
+        socket.emit('groupUpdated', {'userId': friendId});
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Added ${friendId} to group')),
         );
       } else {
-        final error = jsonDecode(response.body)['error'] ?? 'Failed to add member';
+        final error =
+            jsonDecode(response.body)['error'] ?? 'Failed to add member';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(error)),
         );

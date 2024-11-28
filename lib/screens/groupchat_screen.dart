@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/groupchat_service.dart';
+import 'invitemember_screen.dart';
 
 class GroupChatScreen extends StatefulWidget {
   final String groupId;
@@ -39,6 +40,22 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Group Chat'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.person_add),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => InviteMemberScreen(
+                    groupId: widget.groupId,
+                    userId: widget.userId,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [

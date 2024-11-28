@@ -32,7 +32,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Group created successfully!')),
       );
-      Navigator.pop(context); // Quay lại màn hình trước
+      Navigator.pop(context, true); // Quay lại màn hình trước
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to create group')),

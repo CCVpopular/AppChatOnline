@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../services/groups_service.dart';
 import 'creategroup_screen.dart';
 import 'groupchat_screen.dart';
-import 'invitemember_screen.dart';
 
 class GroupsScreen extends StatefulWidget {
   final String userId;
@@ -42,8 +41,13 @@ class _GroupsScreenState extends State<GroupsScreen> {
                   builder: (context) =>
                       CreateGroupScreen(userId: widget.userId),
                 ),
-              );
+              ).then((result) {
+                if (result == true) {
+                  groupsService.refreshGroups(); // Gọi hàm làm mới danh sách
+                }
+              });
             },
+
             child: Text('Create Group'),
           ),
         ],
