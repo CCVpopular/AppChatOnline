@@ -43,7 +43,6 @@ router.post('/add-friend', async (req, res) => {
   }
 });
 
-
 // Danh sách bạn bè
 router.get('/friends/:userId', async (req, res) => {
   const userId = req.params.userId;
@@ -60,23 +59,32 @@ router.get('/friends/:userId', async (req, res) => {
 });
 
 
-// // Xác nhận yêu cầu kết bạn
-// router.post('/accept-friend', async (req, res) => {
-//   const { friendshipId } = req.body;
-//   try {
-//     const friendship = await Friendship.findById(friendshipId);
+// Lấy danh sách bạn bè
+router.get('/invitefriends/:userId', async (req, res) => {
+  const { userId } = req.params;
 
-//     if (!friendship || friendship.status !== 'pending') {
-//       return res.status(400).send({ error: 'Friendship is not pending' });
-//     }
+  try {
+    const friends = await Friendship.find({
+      $or: [{ requester: userId }, { receiver: userId }],
+      status: 'accepted',
+    }).populate('requester receiver', 'username');
 
-//     friendship.status = 'accepted';
-//     await friendship.save();
-//     res.send('Friend request accepted');
-//   } catch (err) {
-//     res.status(500).send({ error: 'Failed to accept friend request' });
-//   }
-// });
+    const friendList = friends.map((friend) => {
+      const isRequester = friend.requester._id.toString() === userId;
+      const friendData = isRequester ? friend.receiver : friend.requester;
+      return {
+        id: friendData._id,
+        username: friendData.username,
+      };
+    });
+
+    res.send(friendList);
+  } catch (err) {
+    console.error('Error fetching friends:', err);
+    res.status(500).send({ error: 'Failed to fetch friends' });
+  }
+});
+
 
 
 router.post('/accept-friend', async (req, res) => {

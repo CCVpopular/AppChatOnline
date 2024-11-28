@@ -6,6 +6,8 @@ const authRoutes = require('./routes/authRoutes');
 const friendRoutes = require('./routes/friendRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const Message = require('./models/Message');
+const GroupMessage = require('./models/GroupMessage');
+const Group = require('./routes/groupRoutes')
 const userRoutes = require('./routes/userRoutes')
 
 const app = express();
@@ -30,9 +32,21 @@ app.use('/api/auth', authRoutes);
 app.use('/api/friends', friendRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/groups', Group);
 
 io.on('connection', (socket) => {
   console.log('New client connected');
+
+    // Khi người dùng tham gia kết nối
+    socket.on('joinUser', (userId) => {
+      console.log(`${userId} joined`);
+      socket.join(userId); // Tham gia phòng riêng cho mỗi người dùng
+    });
+  
+    // Khi có thay đổi về nhóm (tạo nhóm hoặc mời thành viên mới)
+    socket.on('groupUpdated', (userId) => {
+      io.to(userId).emit('updateGroups'); // Gửi thông báo cập nhật nhóm tới userId
+    });
 
   socket.on('joinRoom', ({ userId, friendId }) => {
     // Tạo tên phòng duy nhất cho hai người dùng
@@ -74,6 +88,31 @@ io.on('connection', (socket) => {
     const roomName = [userId, friendId].sort().join('_');
     socket.leave(roomName);
     console.log(`${userId} left room ${roomName}`);
+  });
+
+  // Tham gia phòng nhóm
+  socket.on('joinGroup', ({ groupId }) => {
+    console.log(`User joined group ${groupId}`);
+    socket.join(groupId);
+  });
+
+  // Xử lý gửi tin nhắn nhóm
+  socket.on('sendGroupMessage', async ({ groupId, sender, message }) => {
+    try {
+      // Lưu tin nhắn vào cơ sở dữ liệu
+      const groupMessage = new GroupMessage({ groupId, sender, message });
+      await groupMessage.save();
+
+      // Phát tin nhắn tới tất cả thành viên trong nhóm
+      io.to(groupId).emit('receiveGroupMessage', {
+        groupId,
+        sender,
+        message,
+        timestamp: groupMessage.timestamp,
+      });
+    } catch (err) {
+      console.error('Error sending group message:', err);
+    }
   });
   
 

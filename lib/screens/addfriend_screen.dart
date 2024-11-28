@@ -2,8 +2,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import '../config/config.dart';
+
 class AddFriendScreen extends StatefulWidget {
   final String userId;
+  final String baseUrl = Config.apiBaseUrl;
 
   const AddFriendScreen({Key? key, required this.userId}) : super(key: key);
 
@@ -24,16 +27,19 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     });
 
     try {
-      final url = Uri.parse('http://26.113.132.145:3000/api/users/search/$username');
+      final url =
+          Uri.parse('${widget.baseUrl}/api/users/search/$username');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         setState(() {
-          searchResults = data.map((user) => {
-                'id': user['_id'],
-                'username': user['username'],
-              }).toList();
+          searchResults = data
+              .map((user) => {
+                    'id': user['_id'],
+                    'username': user['username'],
+                  })
+              .toList();
           isLoading = false;
         });
       } else {
@@ -50,7 +56,8 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   // Hàm gửi yêu cầu kết bạn
   Future<void> _sendFriendRequest(String receiverId) async {
     try {
-      final url = Uri.parse('http://26.113.132.145:3000/api/friends/add-friend');
+      final url =
+          Uri.parse('${widget.baseUrl}/api/friends/add-friend');
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -65,7 +72,8 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
           SnackBar(content: Text('Friend request sent!')),
         );
       } else {
-        final error = jsonDecode(response.body)['error'] ?? 'Failed to send friend request';
+        final error = jsonDecode(response.body)['error'] ??
+            'Failed to send friend request';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(error)),
         );

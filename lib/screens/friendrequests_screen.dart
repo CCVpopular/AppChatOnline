@@ -2,8 +2,14 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import '../config/config.dart';
+import 'creategroup_screen.dart';
+import 'groups_screen.dart';
+import 'invitemember_screen.dart';
+
 class FriendRequestsScreen extends StatefulWidget {
   final String userId;
+  final String baseUrl = Config.apiBaseUrl;
 
   const FriendRequestsScreen({Key? key, required this.userId}) : super(key: key);
 
@@ -23,7 +29,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
 
   Future<void> _loadFriendRequests() async {
     try {
-      final url = Uri.parse('http://26.113.132.145:3000/api/friends/friend-requests/${widget.userId}');
+      final url = Uri.parse('${widget.baseUrl}/api/friends/friend-requests/${widget.userId}');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
@@ -51,7 +57,7 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
 
   Future<void> _acceptRequest(String requestId) async {
     try {
-      final url = Uri.parse('http://26.113.132.145:3000/api/friends/accept-friend');
+      final url = Uri.parse('${widget.baseUrl}/api/friends/accept-friend');
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -83,7 +89,25 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Friend Requests'),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => GroupsScreen(userId: widget.userId),
+                ),
+              );
+            },
+            child: Text('View Groups'),
+          ),
+
+          
+          
+
+        ],
       ),
+      
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : friendRequests.isEmpty

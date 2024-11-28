@@ -82,42 +82,40 @@ class _FriendsScreenState extends State<FriendsScreen> {
           if (friends.isEmpty) {
             return Center(child: Text('No friends yet'));
           }
-return ListView.builder(
-  itemCount: friends.length,
-  itemBuilder: (context, index) {
-    final friend = friends[index];
+          return ListView.builder(
+            itemCount: friends.length,
+            itemBuilder: (context, index) {
+              final friend = friends[index];
 
-    // Kiểm tra cấu trúc của `friend`
-    final friendRequester = friend['requester'] as Map<String, dynamic>? ?? {};
-    final friendReceiver = friend['receiver'] as Map<String, dynamic>? ?? {};
-    final friendUsername = friendRequester['_id'] == widget.userId
-        ? (friendReceiver['username'] ?? 'Unknown')
-        : (friendRequester['username'] ?? 'Unknown');
+              // Kiểm tra cấu trúc của `friend`
+              final friendRequester =
+                  friend['requester'] as Map<String, dynamic>? ?? {};
+              final friendReceiver =
+                  friend['receiver'] as Map<String, dynamic>? ?? {};
+              final friendUsername = friendRequester['_id'] == widget.userId
+                  ? (friendReceiver['username'] ?? 'Unknown')
+                  : (friendRequester['username'] ?? 'Unknown');
 
-    return ListTile(
-      title: Text(friendUsername),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChatScreen(
-              userId: widget.userId,
-              friendId: friendRequester['_id'] == widget.userId
-                  ? friendReceiver['_id'] ?? ''
-                  : friendRequester['_id'] ?? '',
-            ),
-          ),
-        );
-      },
-    );
-  },
-);
-
-
-
+              return ListTile(
+                title: Text(friendUsername),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ChatScreen(
+                        userId: widget.userId,
+                        friendId: friendRequester['_id'] == widget.userId
+                            ? friendReceiver['_id'] ?? ''
+                            : friendRequester['_id'] ?? '',
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          );
         },
       ),
-
     );
   }
 }
