@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../config/config.dart';
-import 'groups_screen.dart';
 
 class FriendRequestsScreen extends StatefulWidget {
   final String userId;

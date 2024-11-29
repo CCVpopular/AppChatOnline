@@ -3,6 +3,7 @@ import '../services/friend_service.dart';
 import 'addfriend_screen.dart';
 import 'chat_screen.dart';
 import 'friendrequests_screen.dart';
+import 'groups_screen.dart';
 
 class FriendsScreen extends StatefulWidget {
   final String userId;
@@ -49,6 +50,22 @@ class _FriendsScreenState extends State<FriendsScreen> {
           ),
         ),
         actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => GroupsScreen(userId: widget.userId),
+                ),
+              );
+            },
+            child: Text('View Groups'),
+          ),
+
+          
+          
+
+        
           IconButton(
             icon: Icon(Icons.refresh),
             onPressed: () {

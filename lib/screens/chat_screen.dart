@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
 import 'package:intl/intl.dart'; // thư viện định dạng thời gian hiện trong phần tin nhắn
-import 'package:flutter_chat_ui/flutter_chat_ui.dart';
-import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
+// import 'package:flutter_chat_ui/flutter_chat_ui.dart';
+// import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 
 class ChatScreen extends StatefulWidget {
   final String userId;
@@ -203,12 +203,12 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
 
                 // Nút gửi file với hiệu ứng màu nền
-                IconButton(
-                  icon: const Icon(Icons.attach_file),
-                  onPressed: _selectFile,
-                  iconSize: 30,
-                  color: Color.fromARGB(227, 130, 190, 197), // Màu cho icon
-                ),
+                // IconButton(
+                //   icon: const Icon(Icons.attach_file),
+                //   onPressed: _selectFile,
+                //   iconSize: 30,
+                //   color: Color.fromARGB(227, 130, 190, 197), // Màu cho icon
+                // ),
 
                 // Nút gửi tin nhắn với hiệu ứng màu nền
                 IconButton(
@@ -218,13 +218,13 @@ class _ChatScreenState extends State<ChatScreen> {
                   color: Color.fromARGB(227, 130, 190, 197), // Màu cho icon
                 ),
 
-                // Nút gọi video với hiệu ứng màu nền
-                IconButton(
-                  icon: const Icon(Icons.video_call),
-                  onPressed: _startVideoCall,
-                  iconSize: 30,
-                  color: Color.fromARGB(227, 130, 190, 197), // Màu cho icon
-                ),
+                // // Nút gọi video với hiệu ứng màu nền
+                // IconButton(
+                //   icon: const Icon(Icons.video_call),
+                //   onPressed: _startVideoCall,
+                //   iconSize: 30,
+                //   color: Color.fromARGB(227, 130, 190, 197), // Màu cho icon
+                // ),
               ],
             ),
           ),
