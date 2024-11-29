@@ -9,11 +9,34 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Login')),
+      appBar: AppBar(
+        title: const Text('Login'),
+        backgroundColor: Colors.transparent,   // Màu của AppBar
+        elevation: 4.0, // Tạo hiệu ứng đổ bóng cho AppBar
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color.fromARGB(207, 70, 131, 180),  // Màu thứ hai
+                Color.fromARGB(41, 130, 190, 197), // Màu đầu tiên
+              ],
+            ),
+          ),
+        ),
+      ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(80.0),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            //logo
+            Icon(
+              Icons.message,
+              size: 100,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             TextField(
               controller: usernameController,
               decoration: InputDecoration(labelText: 'Username'),
