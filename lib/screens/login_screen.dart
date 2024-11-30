@@ -1,58 +1,114 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 import 'friends_screen.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
+  @override
+  _LoginScreenState createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  bool rememberMe = false; // Trạng thái "Ghi nhớ đăng nhập"
+  bool isLoading = true; // Hiển thị trạng thái tải khi kiểm tra đăng nhập
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginState(); // Kiểm tra trạng thái đăng nhập
+  }
+
+  Future<void> _checkLoginState() async {
+    final authService = AuthService();
+    final loginState = await authService.checkLoginState();
+    if (loginState != null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FriendsScreen(userId: loginState['userId']!),
+        ),
+      );
+    } else {
+      setState(() {
+        isLoading = false; // Ngừng hiển thị trạng thái tải
+      });
+    }
+  }
+
+  Future<void> _login() async {
+    try {
+      final authService = AuthService();
+      final user = await authService.login(
+        usernameController.text,
+        passwordController.text,
+      );
+
+      // Lưu trạng thái đăng nhập nếu "Ghi nhớ đăng nhập" được chọn
+      await authService.saveLoginState(
+        user['userId'],
+        usernameController.text,
+        rememberMe,
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FriendsScreen(userId: user['userId']),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Login failed: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Login')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: usernameController,
-              decoration: InputDecoration(labelText: 'Username'),
+    return isLoading
+        ? Center(child: CircularProgressIndicator())
+        : Scaffold(
+            appBar: AppBar(title: Text('Login')),
+            body: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: usernameController,
+                    decoration: InputDecoration(labelText: 'Username'),
+                  ),
+                  TextField(
+                    controller: passwordController,
+                    obscureText: true,
+                    decoration: InputDecoration(labelText: 'Password'),
+                  ),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: rememberMe,
+                        onChanged: (value) {
+                          setState(() {
+                            rememberMe = value!;
+                          });
+                        },
+                      ),
+                      Text('Remember Me'),
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: _login,
+                    child: Text('Login'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pushNamed(context, '/register'),
+                    child: Text('Don\'t have an account? Register'),
+                  ),
+                ],
+              ),
             ),
-            TextField(
-              controller: passwordController,
-              obscureText: true,
-              decoration: InputDecoration(labelText: 'Password'),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () async {
-                try {
-                  final authService = AuthService();
-                  final user = await authService.login(
-                    usernameController.text,
-                    passwordController.text,
-                  );
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => FriendsScreen(userId: user['userId']),
-                    ),
-                  );
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Login failed: $e')),
-                  );
-                }
-              },
-              child: Text('Login'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pushNamed(context, '/register'),
-              child: Text('Don\'t have an account? Register'),
-            ),
-          ],
-        ),
-      ),
-    );
+          );
   }
 }

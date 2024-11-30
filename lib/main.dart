@@ -1,21 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/login_screen.dart';
-import 'screens/register_screen.dart';
+import 'screens/friends_screen.dart';
 
-void main() {
-  runApp(MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+  final userId = prefs.getString('userId') ?? '';
+
+  runApp(MyApp(
+    initialScreen: isLoggedIn
+        ? FriendsScreen(userId: userId) // Chuyển đến màn hình bạn bè nếu đã đăng nhập
+        : LoginScreen(), // Chuyển đến màn hình đăng nhập nếu chưa đăng nhập
+  ));
 }
 
 class MyApp extends StatelessWidget {
+  final Widget initialScreen;
+
+  const MyApp({Key? key, required this.initialScreen}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Chat App',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: LoginScreen(),
-      routes: {
-        '/register': (context) => RegisterScreen(),
-      },
+      home: initialScreen,
     );
   }
 }
