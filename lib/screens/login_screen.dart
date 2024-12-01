@@ -83,7 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return isLoading
         ? const Center(child: CircularProgressIndicator())
         : Scaffold(
-            appBar: AppBar(title: Text('Login')),
+            // appBar: AppBar(title: const Text('Login')),
             body: Center(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -97,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         size: 100, // Kích thước icon
                         color: Colors.blueAccent, // Màu icon
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 5),
                       // Thêm tiêu đề Login
                       const Text(
                         'Login',
@@ -110,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Ô nhập Username
                       TextField(
                         controller: usernameController,
-                        decoration:const InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Username',
                           border: OutlineInputBorder(),
                         ),
@@ -122,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         obscureText: !isPasswordVisible, // Kiểm soát hiện/ẩn
                         decoration: InputDecoration(
                           labelText: 'Password',
-                          border:const  OutlineInputBorder(),
+                          border: const OutlineInputBorder(),
                           suffixIcon: IconButton(
                             icon: Icon(
                               isPasswordVisible
@@ -158,47 +158,38 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: _login,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blueAccent, // Màu nền
-                          padding:const EdgeInsets.symmetric(
+                          padding: const EdgeInsets.symmetric(
                               horizontal: 40, vertical: 15), // Kích thước nút
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30), // Bo góc
                           ),
-                          textStyle:const TextStyle(
+                          textStyle: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        child:const Text('Login'),
+                        child: const Text('Login', style: TextStyle(color: Colors.white),),
+
                       ),
                       const SizedBox(height: 10),
                       // Nút dẫn đến trang đăng ký
                       TextButton(
-                        onPressed: () =>
-                            Navigator.pushNamed(context, '/register'),
-                        child:const Text(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => RegisterScreen(),
+                            ),
+                          );
+                        },
+                        child: const Text(
                           'Don\'t have an account? Register',
                           style: TextStyle(color: Colors.blueAccent),
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _login,
-                    child: Text('Login'),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => RegisterScreen(),
-                        ),
-                      );
-                    },
-                    child: Text('Don\'t have an account? Register'),
-                  ),
-                ],
+                ),
               ),
             ),
           );
