@@ -32,7 +32,7 @@ class NotificationService {
   }
 
   Future<void> _sendTokenToServer(String userId, String token) async {
-    final url = Uri.parse('$baseUrl/api/users/update-fcm-token');
+    final url = Uri.parse('$baseUrl/api/users/save-fcm-token');
     try {
       final response = await http.post(
         url,
