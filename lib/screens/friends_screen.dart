@@ -3,6 +3,8 @@ import '../services/friend_service.dart';
 import 'addfriend_screen.dart';
 import 'chat_screen.dart';
 import 'friendrequests_screen.dart';
+import 'package:provider/provider.dart'; // Import provider
+import '../theme/theme_notifier.dart'; // Import ThemeNotifier
 
 class FriendsScreen extends StatefulWidget {
   final String userId;
@@ -15,6 +17,8 @@ class FriendsScreen extends StatefulWidget {
 
 class _FriendsScreenState extends State<FriendsScreen> {
   late FriendService friendService;
+  double _circleSize = 50; // Kích thước ban đầu của vòng tròn hiệu ứng
+  bool _isDarkMode = false;
 
   @override
   void initState() {
@@ -49,6 +53,21 @@ class _FriendsScreenState extends State<FriendsScreen> {
           ),
         ),
         actions: [
+          IconButton(
+            icon: Icon(
+              context.watch<ThemeNotifier>().themeMode == ThemeMode.dark
+                  ? Icons.light_mode
+                  : Icons.dark_mode,
+            ),
+            onPressed: () {
+              // Tạo hành động chuyển đổi theme
+              final themeNotifier = context.read<ThemeNotifier>();
+              final currentTheme = themeNotifier.themeMode;
+              themeNotifier.setThemeMode(
+                currentTheme == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark,
+              );
+            },
+          ),
           IconButton(
             icon: Icon(Icons.refresh),
             onPressed: () {

@@ -121,7 +121,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               decoration: BoxDecoration(
                                 color: isCurrentUser
                                     ? const Color.fromARGB(145, 130, 190, 197)
-                                    : Colors.grey[300],
+                                    : const Color.fromARGB(145, 130, 190, 197),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: message.containsKey('fileUrl')
