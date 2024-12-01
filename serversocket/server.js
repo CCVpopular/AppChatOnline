@@ -7,6 +7,7 @@ const friendRoutes = require('./routes/friendRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const Message = require('./models/Message');
 const GroupMessage = require('./models/GroupMessage');
+const User = require('./models/User');
 const Group = require('./routes/groupRoutes')
 const userRoutes = require('./routes/userRoutes')
 
@@ -89,23 +90,29 @@ io.on('connection', (socket) => {
   
       // Gửi tin nhắn tới phòng
       io.to(roomName).emit('receiveMessage', data);
-
+  
+      // Tìm FCM token của người nhận
+      const user = await User.findById(receiver);
+  
       if (user && user.fcmToken) {
         // Gửi thông báo FCM
         const payload = {
+          token: user.fcmToken,
           notification: {
-            title: `New message from ${sender}`,
+            title: `New message from ${user.username}`,
             body: message,
           },
         };
-
-        await admin.messaging().sendToDevice(user.fcmToken, payload);
-        console.log('Notification sent!');
+  
+        // Sử dụng admin.messaging().send
+        const response = await admin.messaging().send(payload);
+        console.log('Notification sent successfully:', response);
       }
     } catch (err) {
       console.error('Error handling sendMessage:', err);
     }
-  });  
+  });
+  
 
   socket.on('leaveRoom', ({ userId, friendId }) => {
     const roomName = [userId, friendId].sort().join('_');
