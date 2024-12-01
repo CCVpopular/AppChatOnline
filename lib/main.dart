@@ -1,3 +1,4 @@
+import 'package:appchatonline/screens/home_screen.dart';
 import 'package:appchatonline/theme/theme_data.dart';
 import 'package:appchatonline/theme/theme_notifier.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -6,7 +7,6 @@ import 'package:provider/provider.dart'; // Import provider
 import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
 import 'screens/login_screen.dart';
-import 'screens/friends_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,8 +21,7 @@ void main() async {
   // Chọn màn hình khởi tạo dựa trên trạng thái đăng nhập
   runApp(MyApp(
     initialScreen: isLoggedIn
-        ? FriendsScreen(
-            userId: userId) // Chuyển đến màn hình bạn bè nếu đã đăng nhập
+        ? MyHomePage(userId: userId) // Chuyển đến màn hình bạn bè nếu đã đăng nhập
         : LoginScreen(), // Chuyển đến màn hình đăng nhập nếu chưa đăng nhập
   ));
 }

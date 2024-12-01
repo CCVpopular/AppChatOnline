@@ -1,8 +1,10 @@
+import 'dart:io';
+
+import 'package:appchatonline/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 import '../services/notification_service.dart';
-import 'friends_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -28,7 +30,8 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => FriendsScreen(userId: loginState['userId']!),
+          // builder: (context) => FriendsScreen(userId: loginState['userId']!),
+          builder: (context) => MyHomePage(userId: loginState['userId']!),
         ),
       );
     } else {
@@ -52,13 +55,18 @@ class _LoginScreenState extends State<LoginScreen> {
         usernameController.text,
         rememberMe,
       );
-      NotificationService notificationService = NotificationService();
-      await notificationService.init(user['userId']);
-
+      if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+        print(
+            'FCM Token is not required for this platform'); // Không thực hiện lưu FCM Token
+      } else {
+        NotificationService notificationService = NotificationService();
+        await notificationService.init(user['userId']);
+      }
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => FriendsScreen(userId: user['userId']),
+          // builder: (context) => FriendsScreen(userId: user['userId']),
+          builder: (context) => MyHomePage(userId: user['userId']),
         ),
       );
     } catch (e) {
