@@ -5,6 +5,8 @@ import 'addfriend_screen.dart';
 import 'chat_screen.dart';
 import 'friendrequests_screen.dart';
 import 'login_screen.dart';
+import 'package:provider/provider.dart'; // Import provider
+import '../theme/theme_notifier.dart'; // Import ThemeNotifier
 
 class FriendsScreen extends StatefulWidget {
   final String userId;
@@ -17,6 +19,8 @@ class FriendsScreen extends StatefulWidget {
 
 class _FriendsScreenState extends State<FriendsScreen> {
   late FriendService friendService;
+  double _circleSize = 50; // Kích thước ban đầu của vòng tròn hiệu ứng
+  bool _isDarkMode = false;
 
   @override
   void initState() {
@@ -51,6 +55,21 @@ class _FriendsScreenState extends State<FriendsScreen> {
           ),
         ),
         actions: [
+          IconButton(
+            icon: Icon(
+              context.watch<ThemeNotifier>().themeMode == ThemeMode.dark
+                  ? Icons.light_mode
+                  : Icons.dark_mode,
+            ),
+            onPressed: () {
+              // Tạo hành động chuyển đổi theme
+              final themeNotifier = context.read<ThemeNotifier>();
+              final currentTheme = themeNotifier.themeMode;
+              themeNotifier.setThemeMode(
+                currentTheme == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark,
+              );
+            },
+          ),
           IconButton(
             icon: Icon(Icons.refresh),
             onPressed: () {
@@ -137,6 +156,26 @@ class _FriendsScreenState extends State<FriendsScreen> {
                       color: Color.fromARGB(255, 0, 0,
                           0), // Màu chữ trắng để nổi bật trên nền gradient
                     ),
+                  ),
+                  leading: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 30, // Kích thước của avatar
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: Colors.green, // Chấm xanh
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   onTap: () {
                     Navigator.push(
