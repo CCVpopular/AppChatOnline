@@ -56,21 +56,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(
-              context.watch<ThemeNotifier>().themeMode == ThemeMode.dark
-                  ? Icons.light_mode
-                  : Icons.dark_mode,
-            ),
-            onPressed: () {
-              // Tạo hành động chuyển đổi theme
-              final themeNotifier = context.read<ThemeNotifier>();
-              final currentTheme = themeNotifier.themeMode;
-              themeNotifier.setThemeMode(
-                currentTheme == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark,
-              );
-            },
-          ),
-          IconButton(
             icon: Icon(Icons.refresh),
             onPressed: () {
               friendService.getFriends(widget.userId);
