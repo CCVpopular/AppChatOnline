@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:appchatonline/screens/home_screen.dart';
+import 'package:appchatonline/screens/register_screen.dart';
 import 'package:flutter/material.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
@@ -114,7 +115,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Text('Login'),
                   ),
                   TextButton(
-                    onPressed: () => Navigator.pushNamed(context, '/register'),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RegisterScreen(),
+                        ),
+                      );
+                    },
                     child: Text('Don\'t have an account? Register'),
                   ),
                 ],
