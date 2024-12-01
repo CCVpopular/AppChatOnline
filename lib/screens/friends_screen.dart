@@ -19,7 +19,6 @@ class FriendsScreen extends StatefulWidget {
 
 class _FriendsScreenState extends State<FriendsScreen> {
   late FriendService friendService;
-  double _circleSize = 50; // Kích thước ban đầu của vòng tròn hiệu ứng
   bool _isDarkMode = false;
 
   @override
@@ -56,13 +55,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh),
             onPressed: () {
               friendService.getFriends(widget.userId);
             },
           ),
           IconButton(
-            icon: Icon(Icons.person_add),
+            icon: const Icon(Icons.person_add),
             onPressed: () {
               Navigator.push(
                 context,
@@ -73,7 +72,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
             },
           ),
           IconButton(
-            icon: Icon(Icons.group),
+            icon: const Icon(Icons.group),
             onPressed: () {
               Navigator.push(
                 context,
@@ -90,18 +89,19 @@ class _FriendsScreenState extends State<FriendsScreen> {
         stream: friendService.friendsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text('Failed to load friends'));
+            return const Center(child: Text('Failed to load friends'));
           }
 
           final friends = snapshot.data ?? [];
 
           if (friends.isEmpty) {
-            return Center(child: Text('No friends yet'));
+            return const Center(child: Text('No friends yet'));
           }
+
           return ListView.builder(
             itemCount: friends.length,
             itemBuilder: (context, index) {
@@ -112,69 +112,80 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   friend['requester'] as Map<String, dynamic>? ?? {};
               final friendReceiver =
                   friend['receiver'] as Map<String, dynamic>? ?? {};
+
+              // Lấy tên người bạn gửi và nhận yêu cầu kết bạn
               final friendUsername = friendRequester['_id'] == widget.userId
                   ? (friendReceiver['username'] ?? 'Unknown')
                   : (friendRequester['username'] ?? 'Unknown');
+
+              // Lấy tin nhắn gần nhất và người gửi
+              final lastMessage = friend['lastMessage'] ?? 'No message yet';
+              final lastSender = friend['lastSender'] ?? 'Unknown sender';
+
+              // Nếu lastSender nằm trong một đối tượng con, hãy điều chỉnh lại truy cập:
+              String lastSenderName = lastSender;
+              if (lastSender == widget.userId) {
+                lastSenderName = 'Bạn'; // Nếu người gửi là người dùng hiện tại
+              } else if (lastSender.isNotEmpty) {
+                // Nếu lastSender không phải là người dùng hiện tại, xác định tên người gửi
+                lastSenderName = friendRequester['_id'] == lastSender
+                    ? friendReceiver['username'] ?? 'Unknown'
+                    : friendRequester['username'] ?? 'Unknown';
+              }
 
               return Container(
                 margin:
                     const EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(15), // Bo tròn góc
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color.fromARGB(
-                          207, 70, 131, 180), // Màu thứ hai của gradient
-                      Color.fromARGB(129, 130, 190, 197), // Màu đầu tiên
-                    ],
-                  ),
                 ),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(
-                      10.0), // Padding cho nội dung ListTile
-                  title: Text(
-                    friendUsername,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color.fromARGB(255, 0, 0,
-                          0), // Màu chữ trắng để nổi bật trên nền gradient
-                    ),
-                  ),
-                  leading: Stack(
-                    children: [
-                      CircleAvatar(
-                        radius: 30, // Kích thước của avatar
+                child: Column(
+                  children: [
+                    ListTile(
+                      contentPadding: const EdgeInsets.all(10.0),
+                      title: Text(
+                        friendUsername,
+                        style: const TextStyle(
+                          fontSize: 25,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          width: 12,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: Colors.green, // Chấm xanh
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
+                      leading: const CircleAvatar(
+                        radius: 40,
+                        child: Icon(
+                          Icons.person,
+                          size: 40,
+                          color: Colors.white,
+                        ),
+                        backgroundColor: Color.fromARGB(255, 76, 109, 165),
+                      ),
+                      subtitle: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        // children: [
+                        //   // Hiển thị tin nhắn gần đây và người gửi
+                        //   Text(
+                        //     '$lastSenderName: ${lastMessage.length > 30 ? lastMessage.substring(0, 30) + '...' : lastMessage}',
+                        //   ),
+                        // ],
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChatScreen(
+                              userId: widget.userId,
+                              friendId: friendRequester['_id'] == widget.userId
+                                  ? friendReceiver['_id'] ?? ''
+                                  : friendRequester['_id'] ?? '',
+                            ),
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ChatScreen(
-                          userId: widget.userId,
-                          friendId: friendRequester['_id'] == widget.userId
-                              ? friendReceiver['_id'] ?? ''
-                              : friendRequester['_id'] ?? '',
-                        ),
-                      ),
-                    );
-                  },
+                        );
+                      },
+                    ),
+                    const Divider(
+                      thickness: 1,
+                    ),
+                  ],
                 ),
               );
             },
