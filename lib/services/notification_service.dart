@@ -1,15 +1,26 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+import '../config/config.dart';
 
 class NotificationService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  final String baseUrl = Config.apiBaseUrl;
 
-  Future<void> init() async {
-    // Yêu cầu quyền thông báo (chỉ cần cho iOS)
+
+  Future<void> init(String userId) async {
+    // Yêu cầu quyền thông báo
     await _firebaseMessaging.requestPermission();
 
-    // Lấy token của thiết bị để gửi tin nhắn
+    // Lấy FCM Token
     String? token = await _firebaseMessaging.getToken();
     print('FCM Token: $token');
+
+    // Gửi token đến server
+    if (token != null) {
+      await _sendTokenToServer(userId, token);
+    }
 
     // Lắng nghe thông báo khi ứng dụng đang mở
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -18,10 +29,27 @@ class NotificationService {
         print('Notification Body: ${message.notification!.body}');
       }
     });
+  }
 
-    // Lắng nghe khi người dùng nhấn vào thông báo
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('Notification clicked!');
-    });
+  Future<void> _sendTokenToServer(String userId, String token) async {
+    final url = Uri.parse('$baseUrl/api/users/update-fcm-token');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'userId': userId,
+          'fcmToken': token,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print('FCM Token updated successfully on server');
+      } else {
+        print('Failed to update FCM Token: ${response.body}');
+      }
+    } catch (e) {
+      print('Error sending FCM Token to server: $e');
+    }
   }
 }

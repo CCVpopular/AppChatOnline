@@ -90,18 +90,18 @@ io.on('connection', (socket) => {
       // Gửi tin nhắn tới phòng
       io.to(roomName).emit('receiveMessage', data);
 
-      // if (user && user.fcmToken) {
-      //   // Gửi thông báo FCM
-      //   const payload = {
-      //     notification: {
-      //       title: `New message from ${sender}`,
-      //       body: message,
-      //     },
-      //   };
+      if (user && user.fcmToken) {
+        // Gửi thông báo FCM
+        const payload = {
+          notification: {
+            title: `New message from ${sender}`,
+            body: message,
+          },
+        };
 
-      //   await admin.messaging().sendToDevice(user.fcmToken, payload);
-      //   console.log('Notification sent!');
-      // }
+        await admin.messaging().sendToDevice(user.fcmToken, payload);
+        console.log('Notification sent!');
+      }
     } catch (err) {
       console.error('Error handling sendMessage:', err);
     }

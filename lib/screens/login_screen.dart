@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
+import '../services/notification_service.dart';
 import 'friends_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -51,6 +52,8 @@ class _LoginScreenState extends State<LoginScreen> {
         usernameController.text,
         rememberMe,
       );
+      NotificationService notificationService = NotificationService();
+      await notificationService.init(user['userId']);
 
       Navigator.pushReplacement(
         context,
