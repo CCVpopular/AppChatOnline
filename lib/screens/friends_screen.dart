@@ -155,6 +155,26 @@ class _FriendsScreenState extends State<FriendsScreen> {
                           0), // Màu chữ trắng để nổi bật trên nền gradient
                     ),
                   ),
+                  leading: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 30, // Kích thước của avatar
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: Colors.green, // Chấm xanh
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   onTap: () {
                     Navigator.push(
                       context,
