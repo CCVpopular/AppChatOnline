@@ -125,6 +125,21 @@ io.on('connection', (socket) => {
     }
   });
   
+  // Signaling cho WebRTC
+  socket.on('offer', ({ roomName, sdp }) => {
+    console.log(`Offer received for room ${roomName}`);
+    socket.to(roomName).emit('offer', { sdp, from: socket.id });
+  });
+
+  socket.on('answer', ({ roomName, sdp }) => {
+    console.log(`Answer received for room ${roomName}`);
+    socket.to(roomName).emit('answer', { sdp, from: socket.id });
+  });
+
+  socket.on('candidate', ({ roomName, candidate }) => {
+    console.log(`ICE candidate received for room ${roomName}`);
+    socket.to(roomName).emit('candidate', { candidate, from: socket.id });
+  });
 
   socket.on('disconnect', () => {
     console.log('Client disconnected');

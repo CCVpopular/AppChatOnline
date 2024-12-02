@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:appchatonline/services/SocketManager.dart';
 import 'package:http/http.dart' as http;
+import 'package:file_picker/file_picker.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 import '../config/config.dart';
@@ -69,16 +70,29 @@ ChatService(this.userId, this.friendId) {
     }
   }
 
+  //Xử lí upload file, hình ảnh
+  Future<void> sendFile(PlatformFile file) async {
+    final url = Uri.parse('${baseUrl}/api/messages/upload');
+    final request = http.MultipartRequest('POST', url);
+
+    request.fields['sender'] = userId;
+    request.fields['receiver'] = friendId;
+    request.files.add(await http.MultipartFile.fromPath(
+      'file',
+      file.path!,
+      filename: file.name,
+  ));
+
+  final response = await request.send();
+    if (response.statusCode == 200) {
+      print('File uploaded successfully');
+    } else {
+      print('Failed to upload file: ${response.reasonPhrase}');
+    }
+  }
+
   // Stream để lắng nghe tin nhắn
   Stream<Map<String, String>> get messageStream => _messageStreamController.stream;
 
-  // // Đóng Stream và Socket
-  // void dispose() {
-  //   socket.emit('leaveRoom', {
-  //     'userId': userId,
-  //     'friendId': friendId,
-  //   });
-  //   socket.disconnect();
-  //   _messageStreamController.close();
-  // }
+  
 }
