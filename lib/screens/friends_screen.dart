@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
 import '../services/friend_service.dart';
 import 'addfriend_screen.dart';
 import 'chat_screen.dart';
 import 'friendrequests_screen.dart';
+import 'login_screen.dart';
+import 'package:provider/provider.dart'; // Import provider
+import '../theme/theme_notifier.dart'; // Import ThemeNotifier
 
 class FriendsScreen extends StatefulWidget {
   final String userId;
@@ -15,6 +19,8 @@ class FriendsScreen extends StatefulWidget {
 
 class _FriendsScreenState extends State<FriendsScreen> {
   late FriendService friendService;
+  double _circleSize = 50; // Kích thước ban đầu của vòng tròn hiệu ứng
+  bool _isDarkMode = false;
 
   @override
   void initState() {
@@ -33,7 +39,21 @@ class _FriendsScreenState extends State<FriendsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Friends'),
+        title: const Text('Friends'),
+        backgroundColor: Colors.transparent, // Màu của AppBar
+        elevation: 4.0, // Tạo hiệu ứng đổ bóng cho AppBar
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color.fromARGB(207, 70, 131, 180), // Màu thứ hai
+                Color.fromARGB(41, 130, 190, 197), // Màu đầu tiên
+              ],
+            ),
+          ),
+        ),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh),
@@ -96,21 +116,66 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   ? (friendReceiver['username'] ?? 'Unknown')
                   : (friendRequester['username'] ?? 'Unknown');
 
-              return ListTile(
-                title: Text(friendUsername),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ChatScreen(
-                        userId: widget.userId,
-                        friendId: friendRequester['_id'] == widget.userId
-                            ? friendReceiver['_id'] ?? ''
-                            : friendRequester['_id'] ?? '',
-                      ),
+              return Container(
+                margin:
+                    const EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(15), // Bo tròn góc
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color.fromARGB(
+                          207, 70, 131, 180), // Màu thứ hai của gradient
+                      Color.fromARGB(129, 130, 190, 197), // Màu đầu tiên
+                    ],
+                  ),
+                ),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.all(
+                      10.0), // Padding cho nội dung ListTile
+                  title: Text(
+                    friendUsername,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromARGB(255, 0, 0,
+                          0), // Màu chữ trắng để nổi bật trên nền gradient
                     ),
-                  );
-                },
+                  ),
+                  leading: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 30, // Kích thước của avatar
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: Colors.green, // Chấm xanh
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChatScreen(
+                          userId: widget.userId,
+                          friendId: friendRequester['_id'] == widget.userId
+                              ? friendReceiver['_id'] ?? ''
+                              : friendRequester['_id'] ?? '',
+                        ),
+                      ),
+                    );
+                  },
+                ),
               );
             },
           );

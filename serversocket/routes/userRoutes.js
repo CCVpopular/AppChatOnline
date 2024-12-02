@@ -19,4 +19,24 @@ router.get('/search/:username', async (req, res) => {
   }
 });
 
+// API để lưu FCM Token
+router.post('/save-fcm-token', async (req, res) => {
+  const { userId, fcmToken } = req.body;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).send({ error: 'User not found' });
+    }
+
+    user.fcmToken = fcmToken; // Cập nhật token
+    await user.save();
+
+    res.send({ message: 'FCM Token saved successfully' });
+  } catch (err) {
+    console.error('Error saving FCM Token:', err);
+    res.status(500).send({ error: 'Failed to save FCM Token' });
+  }
+});
+
 module.exports = router;

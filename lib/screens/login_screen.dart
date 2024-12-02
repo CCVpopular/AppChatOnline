@@ -1,7 +1,11 @@
+import 'dart:io';
+
+import 'package:appchatonline/screens/home_screen.dart';
+import 'package:appchatonline/screens/register_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
-import 'friends_screen.dart';
+import '../services/notification_service.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -13,6 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController passwordController = TextEditingController();
   bool rememberMe = false; // Trạng thái "Ghi nhớ đăng nhập"
   bool isLoading = true; // Hiển thị trạng thái tải khi kiểm tra đăng nhập
+  bool isPasswordVisible = false; // Biến trạng thái hiện/ẩn mật khẩu
 
   @override
   void initState() {
@@ -27,7 +32,8 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => FriendsScreen(userId: loginState['userId']!),
+          // builder: (context) => FriendsScreen(userId: loginState['userId']!),
+          builder: (context) => MyHomePage(userId: loginState['userId']!),
         ),
       );
     } else {
@@ -51,11 +57,18 @@ class _LoginScreenState extends State<LoginScreen> {
         usernameController.text,
         rememberMe,
       );
-
+      if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+        print(
+            'FCM Token is not required for this platform'); // Không thực hiện lưu FCM Token
+      } else {
+        NotificationService notificationService = NotificationService();
+        await notificationService.init(user['userId']);
+      }
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => FriendsScreen(userId: user['userId']),
+          // builder: (context) => FriendsScreen(userId: user['userId']),
+          builder: (context) => MyHomePage(userId: user['userId']),
         ),
       );
     } catch (e) {
@@ -68,33 +81,105 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return isLoading
-        ? Center(child: CircularProgressIndicator())
+        ? const Center(child: CircularProgressIndicator())
         : Scaffold(
             appBar: AppBar(title: Text('Login')),
-            body: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  TextField(
-                    controller: usernameController,
-                    decoration: InputDecoration(labelText: 'Username'),
-                  ),
-                  TextField(
-                    controller: passwordController,
-                    obscureText: true,
-                    decoration: InputDecoration(labelText: 'Password'),
-                  ),
-                  Row(
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Checkbox(
-                        value: rememberMe,
-                        onChanged: (value) {
-                          setState(() {
-                            rememberMe = value!;
-                          });
-                        },
+                      // Sử dụng icon thay cho logo
+                      const Icon(
+                        Icons.chat, // Icon có sẵn trong Flutter
+                        size: 100, // Kích thước icon
+                        color: Colors.blueAccent, // Màu icon
                       ),
-                      Text('Remember Me'),
+                      const SizedBox(height: 20),
+                      // Thêm tiêu đề Login
+                      const Text(
+                        'Login',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                      // Ô nhập Username
+                      TextField(
+                        controller: usernameController,
+                        decoration:const InputDecoration(
+                          labelText: 'Username',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      // Ô nhập Password với nút hiện/ẩn
+                      TextField(
+                        controller: passwordController,
+                        obscureText: !isPasswordVisible, // Kiểm soát hiện/ẩn
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          border:const  OutlineInputBorder(),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              isPasswordVisible
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                isPasswordVisible = !isPasswordVisible;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      // Checkbox "Remember Me"
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: rememberMe,
+                            onChanged: (value) {
+                              setState(() {
+                                rememberMe = value!;
+                              });
+                            },
+                          ),
+                          const Text('Remember Me'),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      // Nút đăng nhập đẹp hơn
+                      ElevatedButton(
+                        onPressed: _login,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent, // Màu nền
+                          padding:const EdgeInsets.symmetric(
+                              horizontal: 40, vertical: 15), // Kích thước nút
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30), // Bo góc
+                          ),
+                          textStyle:const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        child:const Text('Login'),
+                      ),
+                      const SizedBox(height: 10),
+                      // Nút dẫn đến trang đăng ký
+                      TextButton(
+                        onPressed: () =>
+                            Navigator.pushNamed(context, '/register'),
+                        child:const Text(
+                          'Don\'t have an account? Register',
+                          style: TextStyle(color: Colors.blueAccent),
+                        ),
+                      ),
                     ],
                   ),
                   SizedBox(height: 20),
@@ -103,7 +188,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Text('Login'),
                   ),
                   TextButton(
-                    onPressed: () => Navigator.pushNamed(context, '/register'),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RegisterScreen(),
+                        ),
+                      );
+                    },
                     child: Text('Don\'t have an account? Register'),
                   ),
                 ],

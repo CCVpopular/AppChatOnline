@@ -140,7 +140,6 @@ class _ChatScreenState extends State<ChatScreen> {
                     itemBuilder: (context, index) {
                       final message = messages[index];
                       final isCurrentUser = message['sender'] == widget.userId;
-
                       return Row(
                         mainAxisAlignment: isCurrentUser
                             ? MainAxisAlignment.end
@@ -161,7 +160,6 @@ class _ChatScreenState extends State<ChatScreen> {
                                 ),
                               ),
                             ),
-
                           // Bong bóng tin nhắn
                           Flexible(
                             child: Container(
@@ -170,7 +168,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               decoration: BoxDecoration(
                                 color: isCurrentUser
                                     ? const Color.fromARGB(145, 130, 190, 197)
-                                    : Colors.grey[300],
+                                    : const Color.fromARGB(145, 130, 190, 197),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: message.containsKey('fileUrl')
@@ -190,8 +188,6 @@ class _ChatScreenState extends State<ChatScreen> {
                                   : Text(message['message'] ?? ''),
                             ),
                           ),
-
-                          // Avatar cho người gửi hiện tại
                           if (isCurrentUser)
                             const Padding(
                               padding: EdgeInsets.only(left: 4.0, right: 8.0),
