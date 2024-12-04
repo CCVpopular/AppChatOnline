@@ -90,7 +90,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         label: Text('Friend'),
                       ),
                       NavigationRailDestination(
-                        icon: Icon(Icons.favorite),
+                        icon: Icon(Icons.group),
                         label: Text('Group'),
                       ),
                       NavigationRailDestination(

@@ -29,7 +29,6 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
     try {
       final url = Uri.parse('${widget.baseUrl}/api/friends/friend-requests/${widget.userId}');
       final response = await http.get(url);
-
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         setState(() {

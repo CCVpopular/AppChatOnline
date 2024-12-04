@@ -17,7 +17,6 @@ const io = socketIo(server);
 
 const admin = require('firebase-admin');
 
-// // Tải file service account từ Firebase Console
 const serviceAccount = require('./key/app-chat-push-notification.json');
 
 admin.initializeApp({
@@ -101,6 +100,12 @@ io.on('connection', (socket) => {
           notification: {
             title: `New message from ${user.username}`,
             body: message,
+          },
+          android: {
+            notification: { 
+              tag: receiver,        // Use sender ID as the tag
+              groupKey: receiver,      // Use sender ID as the group key
+            },
           },
         };
   
