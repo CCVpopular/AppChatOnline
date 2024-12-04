@@ -102,12 +102,13 @@ io.on('connection', (socket) => {
             body: message,
           },
           android: {
-            notification: { 
-              tag: receiver,        // Use sender ID as the tag
-              groupKey: receiver,      // Use sender ID as the group key
+            collapseKey: `chat_${receiver}`, // Hợp nhất thông báo theo người nhận
+            notification: {
+              tag: `user_${sender}`, // Gộp theo người gửi
             },
           },
         };
+        
   
         // Sử dụng admin.messaging().send
         const response = await admin.messaging().send(payload);
