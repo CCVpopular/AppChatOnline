@@ -102,6 +102,8 @@ io.on('connection', (socket) => {
             body: message,
           },
           android: {
+
+
             collapseKey: `chat_${receiver}`, // Hợp nhất thông báo theo người nhận
             notification: {
               tag: `user_${sender}`, // Gộp theo người gửi

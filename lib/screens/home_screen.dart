@@ -1,3 +1,4 @@
+import 'package:appchatonline/screens/chatbot_screen.dart';
 import 'package:appchatonline/screens/settings_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -29,6 +30,9 @@ class _MyHomePageState extends State<MyHomePage> {
         page = GroupsScreen(userId: widget.userId);
         break;
       case 2:
+        page = ChatBotScreen();
+        break;
+      case 3:
         page = SettingsScreen(username: "text", userId: widget.userId);
         break;
       default:
@@ -64,6 +68,10 @@ class _MyHomePageState extends State<MyHomePage> {
                         label: 'Group',
                       ),
                       BottomNavigationBarItem(
+                        icon: Icon(Icons.chat),
+                        label: 'Chat Bot',
+                      ),
+                      BottomNavigationBarItem(
                         icon: Icon(Icons.settings),
                         label: 'Setting',
                       ),
@@ -92,6 +100,10 @@ class _MyHomePageState extends State<MyHomePage> {
                       NavigationRailDestination(
                         icon: Icon(Icons.group),
                         label: Text('Group'),
+                      ),
+                      NavigationRailDestination(
+                        icon: Icon(Icons.chat),
+                        label: Text('Chat Bot'),
                       ),
                       NavigationRailDestination(
                         icon: Icon(Icons.settings),
