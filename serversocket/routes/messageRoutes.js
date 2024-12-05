@@ -20,7 +20,7 @@ const upload = multer({ storage });
 
 // Cấu hình Google Drive API
 const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
-const KEY_FILE_PATH = path.join(__dirname, '../path-to-your-service-account.json');
+const KEY_FILE_PATH = path.join(__dirname, '../setup_googdrive.json');
 const auth = new google.auth.GoogleAuth({
   keyFile: KEY_FILE_PATH,
   scopes: SCOPES,
@@ -37,25 +37,57 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 
     // Upload file lên Google Drive
     const fileMetadata = {
+      //name: 'upload',
       name: req.file.filename, // Tên file trên Google Drive
-      parents: ['your-google-drive-folder-id'], // ID thư mục trên Google Drive
+      parents: ['1uoKXq4MXKEpEMT3_Fwdtttm84AIpq-h0'],
     };
     const media = {
       mimeType: req.file.mimetype,
       body: fs.createReadStream(req.file.path),
     };
+    const filePath = req.file.path;
+    if (!fs.existsSync(filePath)) {
+      console.error('File not found at path:', filePath);
+      return res.status(400).send({ error: 'File does not exist' });
+    }
+    if (!fs.existsSync(req.file.path)) {
+      return res.status(400).send({ error: 'File does not exist at the given path' });
+    }
     const driveResponse = await drive.files.create({
       resource: fileMetadata,
       media,
       fields: 'id',
+    }).catch(error => {
+      console.error('Error uploading file to Google Drive:', error.response ? error.response.data : error);
+      throw new Error('Failed to upload file to Google Drive');
     });
 
+    console.log('Google Drive upload response:', driveResponse.data);
+
     // Xóa file tạm sau khi upload
-    fs.unlinkSync(req.file.path);
+    //fs.unlinkSync(req.file.path);
+    try {
+      await fs.promises.unlink(req.file.path);
+    } catch (err) {
+      console.error('Error deleting temporary file:', err.message);
+    }
+
+    const fileStream = fs.createReadStream(req.file.path);
+    fileStream.on('close', () => {
+      console.log('File stream closed successfully');
+    });
 
     // Lấy link file từ Google Drive
     const fileId = driveResponse.data.id;
     const fileUrl = `https://drive.google.com/uc?id=${fileId}&export=download`;
+
+    await drive.permissions.create({
+      fileId: fileId,
+      requestBody: {
+        role: 'reader',
+        type: 'anyone',
+      },
+    });
 
     // Lưu thông tin tin nhắn vào database
     const newMessage = new Message({
@@ -82,8 +114,9 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     res.status(200).send({ message: 'File uploaded successfully', fileUrl });
   } catch (error) {
     console.error('Upload error:', error);
-    res.status(500).send({ error: 'Server error' });
+    res.status(500).send({ error: 'Server error', details: error.message }); // Log error message
   }
+
 });
 
 module.exports = router;
