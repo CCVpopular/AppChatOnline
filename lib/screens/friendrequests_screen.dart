@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../config/config.dart';
-import 'groups_screen.dart';
 
 class FriendRequestsScreen extends StatefulWidget {
   final String userId;
@@ -81,29 +80,39 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
     }
   }
 
+  Future<void> _rejectRequest(String requestId) async {
+    try {
+      final url = Uri.parse('${widget.baseUrl}/api/friends/reject-friend');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'friendshipId': requestId}),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Friend request rejected')),
+        );
+        setState(() {
+          friendRequests.removeWhere((req) => req['id'] == requestId);
+        });
+      } else {
+        final error = jsonDecode(response.body)['error'] ?? 'Failed to reject friend request';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error)),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error rejecting friend request: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // title: Text('Friend Requests'),
-        // actions: [
-        //   ElevatedButton(
-        //     onPressed: () {
-        //       Navigator.push(
-        //         context,
-        //         MaterialPageRoute(
-        //           builder: (context) => GroupsScreen(userId: widget.userId),
-        //         ),
-        //       );
-        //     },
-        //     child: Text('View Groups'),
-        //   ),
-
-          
-          
-
-        // ],
-
         title: const Text('Friend Requests'),
         backgroundColor: Colors.transparent, // Màu của AppBar
         elevation: 4.0, // Tạo hiệu ứng đổ bóng cho AppBar
@@ -131,9 +140,25 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
                     final request = friendRequests[index];
                     return ListTile(
                       title: Text(request['username']),
-                      trailing: ElevatedButton(
-                        onPressed: () => _acceptRequest(request['id']),
-                        child: Text('Accept'),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ElevatedButton(
+                            onPressed: () => _acceptRequest(request['id']),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                            ),
+                            child: const Text('Accept'),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: () => _rejectRequest(request['id']),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                            ),
+                            child: const Text('Reject'),
+                          ),
+                        ],
                       ),
                     );
                   },

@@ -111,4 +111,27 @@ router.post('/accept-friend', async (req, res) => {
   }
 });
 
+router.post('/reject-friend', async (req, res) => {
+  const { friendshipId } = req.body;
+  try {
+    const friendship = await Friendship.findById(friendshipId);
+
+    if (!friendship || friendship.status !== 'pending') {
+      return res.status(400).send({ error: 'Friendship is not pending' });
+    }
+
+    friendship.status = 'declined';
+    await friendship.save();
+
+    // Notify through socket.io
+    const io = req.app.get('socketio');
+    io.emit('friendshipUpdated', friendship);
+
+    res.send('Friend request rejected');
+  } catch (err) {
+    console.error('Error rejecting friend request:', err);
+    res.status(500).send({ error: 'Failed to reject friend request' });
+  }
+});
+
 module.exports = router;
