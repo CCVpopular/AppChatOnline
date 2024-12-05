@@ -44,3 +44,4 @@ app.*.map.json
 
 
 /serversocket/key/app-chat-push-notification.json
+/lib/config/config.dart
