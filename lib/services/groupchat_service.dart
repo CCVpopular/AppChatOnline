@@ -30,6 +30,7 @@ class GroupChatService {
         'sender': data['senderName'],
         'message': data['message'],
         'timestamp': data['timestamp'],
+        'senderId': data['sender'], // Add sender ID for notification handling
       };
       _currentMessages.add(newMessage);
       if (!_messagesgroupStreamController.isClosed) {

@@ -8,7 +8,8 @@ const messageRoutes = require('./routes/messageRoutes');
 const Message = require('./models/Message');
 const GroupMessage = require('./models/GroupMessage');
 const User = require('./models/User');
-const Group = require('./routes/groupRoutes')
+const GroupRoutes = require('./routes/groupRoutes')
+const Group = require('./models/Group');
 const userRoutes = require('./routes/userRoutes')
 
 const app = express();
@@ -42,7 +43,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/friends', friendRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/groups', Group);
+app.use('/api/groups', GroupRoutes);
 
 io.on('connection', (socket) => {
   console.log('New client connected');
@@ -147,10 +148,10 @@ io.on('connection', (socket) => {
       const groupMessage = new GroupMessage({ groupId, sender, message });
       await groupMessage.save();
 
-      // Get sender's username
+      // Get sender's username and group details
       const senderUser = await User.findById(sender);
       const senderName = senderUser ? senderUser.username : 'Unknown';
-
+      const group = await Group.findById(groupId);
       // Phát tin nhắn tới tất cả thành viên trong nhóm
       io.to(groupId).emit('receiveGroupMessage', {
         groupId,
@@ -159,6 +160,34 @@ io.on('connection', (socket) => {
         message,
         timestamp: groupMessage.timestamp,
       });
+
+      // Send push notification to all group members
+      if (group && group.members) {
+        const members = await User.find({ _id: { $in: group.members, $ne: sender } });
+        
+        for (const member of members) {
+          if (member.fcmToken) {
+            const payload = {
+              token: member.fcmToken,
+              notification: {
+                title: `${group.name}`,
+                body: `${senderName}: ${message}`,
+              },
+              android: {
+                collapseKey: `group_${groupId}`,
+                notification: {
+                  tag: `group_${groupId}`,
+                },
+              },
+            };
+            try {
+              await admin.messaging().send(payload);
+            } catch (err) {
+              console.error('Error sending notification to member:', err);
+            }
+          }
+        }
+      }
     } catch (err) {
       console.error('Error sending group message:', err);
     }
