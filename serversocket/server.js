@@ -147,14 +147,15 @@ io.on('connection', (socket) => {
       const groupMessage = new GroupMessage({ groupId, sender, message });
       await groupMessage.save();
 
-      console.log(groupMessage);
-
-      console.log(groupId);
+      // Get sender's username
+      const senderUser = await User.findById(sender);
+      const senderName = senderUser ? senderUser.username : 'Unknown';
 
       // Phát tin nhắn tới tất cả thành viên trong nhóm
       io.to(groupId).emit('receiveGroupMessage', {
         groupId,
         sender,
+        senderName,
         message,
         timestamp: groupMessage.timestamp,
       });

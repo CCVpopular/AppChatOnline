@@ -11,6 +11,7 @@ class GroupChatService {
   final _messagesgroupStreamController =
       StreamController<List<Map<String, dynamic>>>.broadcast();
   final String baseUrl = Config.apiBaseUrl;
+  List<Map<String, dynamic>> _currentMessages = [];
 
   GroupChatService(this.groupId) {
     _connectSocket();
@@ -25,8 +26,15 @@ class GroupChatService {
 
     // Lắng nghe tin nhắn mới
     socket.on('receiveGroupMessage', (data) {
-      // _addMessageToStream(data);
-      _loadMessages();
+      final newMessage = {
+        'sender': data['senderName'],
+        'message': data['message'],
+        'timestamp': data['timestamp'],
+      };
+      _currentMessages.add(newMessage);
+      if (!_messagesgroupStreamController.isClosed) {
+        _messagesgroupStreamController.add(_currentMessages);
+      }
     });
     socket.emit('joinGroup', {'groupId': groupId});
   }
@@ -38,7 +46,7 @@ class GroupChatService {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
-        final messages = data.map((msg) {
+        _currentMessages = data.map((msg) {
           return {
             'sender': msg['sender']['username'],
             'message': msg['message'],
@@ -47,22 +55,13 @@ class GroupChatService {
         }).toList();
 
         if (!_messagesgroupStreamController.isClosed) {
-          _messagesgroupStreamController.add(messages);
+          _messagesgroupStreamController.add(_currentMessages);
         }
       } else {
         throw Exception('Failed to load messages');
       }
     } catch (e) {
       print('Error loading messages: $e');
-    }
-  }
-
-  void _addMessageToStream(Map<String, dynamic> message) async {
-    final currentMessages = await _messagesgroupStreamController.stream
-        .firstWhere((_) => true, orElse: () => []);
-
-    if (!_messagesgroupStreamController.isClosed) {
-      _messagesgroupStreamController.add([...currentMessages, message]);
     }
   }
 
