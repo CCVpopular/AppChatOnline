@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'package:appchatonline/config/config.dart';
+import 'package:appchatonline/config/configapi.dart';
 import 'package:http/http.dart' as http;
 
 class ChatBotService {
-  final String apiUrl = Config.GeminiAPI;
+  final String apiUrl = ConfigAip.GeminiAPI;
 
   Future<String> sendMessage(String message) async {
     try {
