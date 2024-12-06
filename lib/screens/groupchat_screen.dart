@@ -69,6 +69,21 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     );
   }
 
+  String _formatTime(String timestamp) {
+    final dateTime = DateTime.parse(timestamp).toLocal();
+    final now = DateTime.now();
+    
+    if (dateTime.year == now.year && 
+        dateTime.month == now.month && 
+        dateTime.day == now.day) {
+      // Today, just show time
+      return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    } else {
+      // Other days, show date and time
+      return '${dateTime.day}/${dateTime.month} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    }
+  }
+
   Widget _buildMessageContent(Map<String, dynamic> message) {
     final isRecalled = message['isRecalled'] == true;
     final isSender = message['senderId'] == widget.userId;
@@ -86,22 +101,46 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               : Colors.grey[300],
           borderRadius: BorderRadius.circular(10),
         ),
-        child: isRecalled 
-            ? Row(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(Icons.replay, size: 16, color: Colors.grey),
-                  SizedBox(width: 4),
-                  Text(
-                    'Message has been recalled',
-                    style: TextStyle(
-                      fontStyle: FontStyle.italic,
-                      color: Colors.grey,
-                    ),
+        child: Column(
+          crossAxisAlignment: isSender ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: [
+            if (!isSender && !isRecalled)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  message['sender'] ?? '',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
                   ),
-                ],
-              )
-            : Text(message['message'] ?? ''),
+                ),
+              ),
+            isRecalled 
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.replay, size: 16, color: Colors.grey),
+                      SizedBox(width: 4),
+                      Text(
+                        'Message has been recalled',
+                        style: TextStyle(
+                          fontStyle: FontStyle.italic,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  )
+                : Text(message['message'] ?? ''),
+            const SizedBox(height: 2),
+            Text(
+              _formatTime(message['timestamp']),
+              style: const TextStyle(
+                fontSize: 10,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
