@@ -26,7 +26,8 @@ class ChatService {
         'id': data['_id'], // Use the MongoDB _id from server
         'sender': data['sender'],
         'message': data['message'],
-        'isRecalled': 'false'
+        'isRecalled': 'false',
+        'timestamp': DateTime.now().toIso8601String(),
       });
     });
 
@@ -75,9 +76,10 @@ class ChatService {
             'id': msg['_id'].toString(),
             'sender': msg['sender'].toString(),
             'message': msg['message'].toString(),
-            'isRecalled': msg['isRecalled']?.toString() ?? 'false'
+            'isRecalled': msg['isRecalled']?.toString() ?? 'false',
+            'timestamp': msg['timestamp']?.toString() ?? DateTime.now().toIso8601String(),
           };
-        }).toList();
+        }).toList().cast<Map<String, String>>();
       } else {
         throw Exception('Failed to load messages: ${response.body}');
       }

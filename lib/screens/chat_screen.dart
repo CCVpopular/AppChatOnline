@@ -101,6 +101,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildMessageContent(Map<String, String> message) {
     final isRecalled = message['isRecalled'] == 'true';
+    final timestamp = DateTime.parse(message['timestamp'] ?? DateTime.now().toIso8601String());
+    final timeStr = "${timestamp.hour.toString().padLeft(2,'0')}:${timestamp.minute.toString().padLeft(2,'0')}";
     
     return Container(
       margin: const EdgeInsets.all(5.0),
@@ -111,22 +113,37 @@ class _ChatScreenState extends State<ChatScreen> {
             : Colors.grey[300],
         borderRadius: BorderRadius.circular(10),
       ),
-      child: isRecalled 
-          ? Row(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Icon(Icons.replay, size: 16, color: Colors.grey),
-                SizedBox(width: 4),
-                Text(
-                  'Message has been recalled',
-                  style: TextStyle(
-                    fontStyle: FontStyle.italic,
-                    color: Colors.grey,
+      child: Column(
+        crossAxisAlignment: message['sender'] == widget.userId 
+            ? CrossAxisAlignment.end 
+            : CrossAxisAlignment.start,
+        children: [
+          isRecalled 
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(Icons.replay, size: 16, color: Colors.grey),
+                  SizedBox(width: 4),
+                  Text(
+                    'Message has been recalled',
+                    style: TextStyle(
+                      fontStyle: FontStyle.italic,
+                      color: Colors.grey,
+                    ),
                   ),
-                ),
-              ],
-            )
-          : Text(message['message'] ?? ''),
+                ],
+              )
+            : Text(message['message'] ?? ''),
+          const SizedBox(height: 4),
+          Text(
+            timeStr,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.grey,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
