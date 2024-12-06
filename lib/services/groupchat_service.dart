@@ -12,6 +12,7 @@ class GroupChatService {
       StreamController<List<Map<String, dynamic>>>.broadcast();
   final String baseUrl = Config.apiBaseUrl;
   List<Map<String, dynamic>> _currentMessages = [];
+  final _recallStreamController = StreamController<String>.broadcast();
 
   GroupChatService(this.groupId) {
     _connectSocket();
@@ -38,6 +39,10 @@ class GroupChatService {
       }
     });
     socket.emit('joinGroup', {'groupId': groupId});
+
+    socket.on('groupMessageRecalled', (data) {
+      _recallStreamController.add(data['messageId']);
+    });
   }
 
   // Tải tin nhắn từ server
@@ -49,9 +54,12 @@ class GroupChatService {
         final List<dynamic> data = jsonDecode(response.body);
         _currentMessages = data.map((msg) {
           return {
+            'id': msg['_id'],
             'sender': msg['sender']['username'],
             'message': msg['message'],
             'timestamp': msg['timestamp'],
+            'senderId': msg['sender']['_id'],
+            'isRecalled': msg['isRecalled'] ?? false,
           };
         }).toList();
 
@@ -75,9 +83,18 @@ class GroupChatService {
     });
   }
 
+  void recallMessage(String messageId) {
+    socket.emit('recallGroupMessage', {
+      'messageId': messageId,
+      'groupId': groupId,
+    });
+  }
+
   // Stream để lắng nghe tin nhắn
   Stream<List<Map<String, dynamic>>> get messagesgruopStream =>
       _messagesgroupStreamController.stream;
+
+  Stream<String> get recallStream => _recallStreamController.stream;
 
   // Đóng socket và Stream
   void dispose() {
@@ -87,5 +104,6 @@ class GroupChatService {
     if (!_messagesgroupStreamController.isClosed) {
       _messagesgroupStreamController.close();
     }
+    _recallStreamController.close();
   }
 }

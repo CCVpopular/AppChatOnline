@@ -7,6 +7,7 @@ const GroupMessageSchema = new Schema({
   senderName: { type: String },
   message: { type: String, required: true },
   timestamp: { type: Date, default: Date.now },
+  isRecalled: { type: Boolean, default: false },
 });
 
 GroupMessageSchema.pre('save', async function(next) {

@@ -217,6 +217,31 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('recallGroupMessage', async (data) => {
+    try {
+      const { messageId, groupId } = data;
+      const message = await GroupMessage.findById(messageId);
+      
+      if (!message) {
+        console.error('Group message not found:', messageId);
+        return;
+      }
+
+      // Update message in database
+      await GroupMessage.findByIdAndUpdate(messageId, { isRecalled: true });
+      
+      // Send recall event to group
+      io.to(groupId).emit('groupMessageRecalled', { 
+        messageId,
+        isRecalled: true,
+        timestamp: new Date()
+      });
+
+    } catch (err) {
+      console.error('Error recalling group message:', err);
+    }
+  });
+
   socket.on('disconnect', () => {
     console.log('Client disconnected');
   });

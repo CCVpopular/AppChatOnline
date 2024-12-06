@@ -15,11 +15,22 @@ class GroupChatScreen extends StatefulWidget {
 class _GroupChatScreenState extends State<GroupChatScreen> {
   late GroupChatService groupChatService;
   final TextEditingController _controller = TextEditingController();
+  List<Map<String, dynamic>> _currentMessages = [];
 
   @override
   void initState() {
     super.initState();
     groupChatService = GroupChatService(widget.groupId);
+
+    // Add recall listener
+    groupChatService.recallStream.listen((messageId) {
+      setState(() {
+        final index = _currentMessages.indexWhere((msg) => msg['id'] == messageId);
+        if (index != -1) {
+          _currentMessages[index]['isRecalled'] = true;
+        }
+      });
+    });
   }
 
   @override
@@ -33,6 +44,66 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       groupChatService.sendMessage(widget.userId, _controller.text);
       _controller.clear();
     }
+  }
+
+  void _showRecallDialog(String messageId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Recall Message'),
+        content: const Text('Do you want to recall this message?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              groupChatService.recallMessage(messageId);
+              Navigator.pop(context);
+            },
+            child: const Text('Recall'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessageContent(Map<String, dynamic> message) {
+    final isRecalled = message['isRecalled'] == true;
+    final isSender = message['senderId'] == widget.userId;
+    
+    return GestureDetector(
+      onLongPress: isSender && !isRecalled 
+          ? () => _showRecallDialog(message['id'])
+          : null,
+      child: Container(
+        margin: const EdgeInsets.all(5.0),
+        padding: const EdgeInsets.all(12.0),
+        decoration: BoxDecoration(
+          color: isSender
+              ? const Color.fromARGB(145, 130, 190, 197)
+              : Colors.grey[300],
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: isRecalled 
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(Icons.replay, size: 16, color: Colors.grey),
+                  SizedBox(width: 4),
+                  Text(
+                    'Message has been recalled',
+                    style: TextStyle(
+                      fontStyle: FontStyle.italic,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              )
+            : Text(message['message'] ?? ''),
+      ),
+    );
   }
 
   @override
@@ -72,13 +143,30 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 }
 
                 final messages = snapshot.data!;
+                _currentMessages = messages;
                 return ListView.builder(
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     final message = messages[index];
-                    return ListTile(
-                      title: Text(message['sender']),
-                      subtitle: Text(message['message']),
+                    return Row(
+                      mainAxisAlignment: message['senderId'] == widget.userId
+                          ? MainAxisAlignment.end
+                          : MainAxisAlignment.start,
+                      children: [
+                        if (message['senderId'] != widget.userId)
+                          const CircleAvatar(
+                            backgroundColor: Colors.grey,
+                            radius: 20,
+                            child: Icon(Icons.person, color: Colors.white, size: 20),
+                          ),
+                        Flexible(child: _buildMessageContent(message)),
+                        if (message['senderId'] == widget.userId)
+                          const CircleAvatar(
+                            backgroundColor: Color.fromARGB(255, 3, 62, 72),
+                            radius: 20,
+                            child: Icon(Icons.person, color: Colors.white, size: 20),
+                          ),
+                      ],
                     );
                   },
                 );
