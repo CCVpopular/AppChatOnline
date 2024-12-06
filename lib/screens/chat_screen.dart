@@ -20,17 +20,19 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-
-    // Khởi tạo ChatService
+    messages.clear(); // Clear messages when initializing
     chatService = ChatService(widget.userId, widget.friendId);
 
-    // Tải tin nhắn cũ từ server
+    // Load old messages
     _loadMessages();
 
-    // Lắng nghe tin nhắn mới từ Stream
+    // Listen for new messages
     chatService.messageStream.listen((message) {
       setState(() {
-        messages.add(message);
+        // Check if message already exists to prevent duplicates
+        if (!messages.any((msg) => msg['id'] == message['id'])) {
+          messages.add(message);
+        }
       });
     });
 
@@ -52,6 +54,8 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       final oldMessages = await chatService.loadMessages();
       setState(() {
+        // Clear existing messages before adding old ones
+        messages.clear();
         messages.addAll(oldMessages);
         isLoading = false;
       });

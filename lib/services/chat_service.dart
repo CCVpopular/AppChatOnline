@@ -21,6 +21,10 @@ class ChatService {
   }
 
   void _connectSocket() {
+    // Remove any existing event listeners
+    socket.off('receiveMessage');
+    socket.off('messageRecalled');
+    
     socket.on('receiveMessage', (data) {
       _messageStreamController.add({
         'id': data['_id'], // Use the MongoDB _id from server
@@ -35,6 +39,9 @@ class ChatService {
       _recallStreamController.add(data['messageId']);
     });
 
+    // Leave any existing rooms first
+    socket.emit('leaveRoom', {'userId': userId, 'friendId': friendId});
+    // Join new room
     socket.emit('joinRoom', {'userId': userId, 'friendId': friendId});
   }
 
@@ -60,6 +67,8 @@ class ChatService {
 
   void dispose() {
     socket.emit('leaveRoom', {'userId': userId, 'friendId': friendId});
+    socket.off('receiveMessage');
+    socket.off('messageRecalled');
     _messageStreamController.close();
     _recallStreamController.close();
   }
