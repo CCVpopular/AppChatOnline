@@ -102,7 +102,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildMessageContent(Map<String, String> message) {
     final isRecalled = message['isRecalled'] == 'true';
     final timestamp = DateTime.parse(message['timestamp'] ?? DateTime.now().toIso8601String());
-    final timeStr = "${timestamp.hour.toString().padLeft(2,'0')}:${timestamp.minute.toString().padLeft(2,'0')}";
+    final timeStr = "${timestamp.day}/${timestamp.month} ${timestamp.hour.toString().padLeft(2,'0')}:${timestamp.minute.toString().padLeft(2,'0')}";
     
     return Container(
       margin: const EdgeInsets.all(5.0),
