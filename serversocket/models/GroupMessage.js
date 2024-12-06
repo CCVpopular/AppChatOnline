@@ -9,7 +9,6 @@ const GroupMessageSchema = new Schema({
   timestamp: { type: Date, default: Date.now },
 });
 
-// Add pre-save middleware to populate senderName
 GroupMessageSchema.pre('save', async function(next) {
   if (!this.senderName) {
     try {

@@ -74,23 +74,22 @@ io.on('connection', (socket) => {
   socket.on('sendMessage', async (data) => {
     try {
       const { sender, receiver, message } = data;
-  
-      // Kiểm tra dữ liệu đầu vào
-      if (!sender || !receiver || !message) {
-        console.error('Invalid message data:', data);
-        return;
-      }
-  
-      // Tạo tên phòng
-      const roomName = [sender, receiver].sort().join('_');
-  
-      // Lưu tin nhắn vào cơ sở dữ liệu
+      
+      // Save message and get the MongoDB generated _id
       const newMessage = new Message({ sender, receiver, message });
       await newMessage.save();
-  
-      // Gửi tin nhắn tới phòng
-      io.to(roomName).emit('receiveMessage', data);
-  
+
+      // Create room name
+      const roomName = [sender, receiver].sort().join('_');
+
+      // Include the MongoDB _id in the response
+      io.to(roomName).emit('receiveMessage', {
+        _id: newMessage._id,
+        sender,
+        receiver,
+        message
+      });
+
       // Tìm FCM token của người nhận
       const user = await User.findById(receiver);
   
@@ -121,7 +120,6 @@ io.on('connection', (socket) => {
       console.error('Error handling sendMessage:', err);
     }
   });
-  
 
   socket.on('leaveRoom', ({ userId, friendId }) => {
     const roomName = [userId, friendId].sort().join('_');
@@ -193,6 +191,31 @@ io.on('connection', (socket) => {
     }
   });
   
+  socket.on('recallMessage', async (data) => {
+    try {
+      const { messageId, sender, receiver } = data;
+      const message = await Message.findById(messageId);
+      
+      if (!message) {
+        console.error('Message not found:', messageId);
+        return;
+      }
+
+      // Update message in database
+      await Message.findByIdAndUpdate(messageId, { isRecalled: true });
+      
+      // Send recall event to both sender and receiver
+      const roomName = [sender, receiver].sort().join('_');
+      io.to(roomName).emit('messageRecalled', { 
+        messageId,
+        isRecalled: true,
+        timestamp: new Date()
+      });
+
+    } catch (err) {
+      console.error('Error recalling message:', err);
+    }
+  });
 
   socket.on('disconnect', () => {
     console.log('Client disconnected');

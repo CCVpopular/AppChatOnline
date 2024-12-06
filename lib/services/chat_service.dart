@@ -9,24 +9,29 @@ import '../config/config.dart';
 class ChatService {
   late IO.Socket socket;
   final _messageStreamController = StreamController<Map<String, String>>.broadcast();
+  final _recallStreamController = StreamController<String>.broadcast();
   final String userId;
   final String friendId;
 
   final String baseUrl = Config.apiBaseUrl;
 
-ChatService(this.userId, this.friendId) {
+  ChatService(this.userId, this.friendId) {
     socket = SocketManager(Config.apiBaseUrl).getSocket();
     _connectSocket();
   }
 
   void _connectSocket() {
     socket.on('receiveMessage', (data) {
-      if (data['sender'] != userId) {
-        _messageStreamController.add({
-          'sender': data['sender'],
-          'message': data['message'],
-        });
-      }
+      _messageStreamController.add({
+        'id': data['_id'], // Use the MongoDB _id from server
+        'sender': data['sender'],
+        'message': data['message'],
+        'isRecalled': 'false'
+      });
+    });
+
+    socket.on('messageRecalled', (data) {
+      _recallStreamController.add(data['messageId']);
     });
 
     socket.emit('joinRoom', {'userId': userId, 'friendId': friendId});
@@ -38,14 +43,24 @@ ChatService(this.userId, this.friendId) {
       'receiver': friendId,
       'message': message,
     });
-    _messageStreamController.add({'sender': userId, 'message': message});
+    // Don't add message to stream here - wait for server response
   }
 
-  // Stream<Map<String, String>> get messageStream => _messageStreamController.stream;
+  void recallMessage(String messageId) {
+    socket.emit('recallMessage', {
+      'messageId': messageId,
+      'sender': userId,
+      'receiver': friendId,
+    });
+  }
+
+  Stream<Map<String, String>> get oldMessageStream => _messageStreamController.stream;
+  Stream<String> get recallStream => _recallStreamController.stream;
 
   void dispose() {
     socket.emit('leaveRoom', {'userId': userId, 'friendId': friendId});
     _messageStreamController.close();
+    _recallStreamController.close();
   }
 
   // Hàm lấy tin nhắn cũ
@@ -57,8 +72,10 @@ ChatService(this.userId, this.friendId) {
         final List<dynamic> data = jsonDecode(response.body);
         return data.map((msg) {
           return {
+            'id': msg['_id'].toString(),
             'sender': msg['sender'].toString(),
             'message': msg['message'].toString(),
+            'isRecalled': msg['isRecalled']?.toString() ?? 'false'
           };
         }).toList();
       } else {
