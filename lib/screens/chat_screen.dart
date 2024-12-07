@@ -1,15 +1,27 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
+
+import 'video_call_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   final String userId;
   final String friendId;
 
-  const ChatScreen({Key? key, required this.userId, required this.friendId}) : super(key: key);
+  const ChatScreen({Key? key, required this.userId, required this.friendId})
+      : super(key: key);
 
   @override
   _ChatScreenState createState() => _ChatScreenState();
 }
+
+// Khởi tạo RTCVideoRenderer
+late RTCVideoRenderer localRenderer;
+late RTCVideoRenderer remoteRenderer;
 
 class _ChatScreenState extends State<ChatScreen> {
   late ChatService chatService;
@@ -21,6 +33,12 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     messages.clear(); // Clear messages when initializing
+
+    // Khởi tạo các đối tượng video renderer
+    localRenderer = RTCVideoRenderer();
+    remoteRenderer = RTCVideoRenderer();
+
+    // Khởi tạo ChatService
     chatService = ChatService(widget.userId, widget.friendId);
 
     // Load old messages
@@ -67,6 +85,26 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  Future<void> _selectFile() async {
+    final result = await FilePicker.platform.pickFiles();
+    if (result != null && result.files.isNotEmpty) {
+      final file = result.files.first;
+
+      // Gọi hàm sendFile để upload file lên server
+      chatService.sendFile(file);
+    }
+  }
+
+  Future<void> _selectImage() async {
+    final picker = ImagePicker();
+    final pickedImage = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedImage != null) {
+      final file = File(pickedImage.path);
+      // Gọi sendFile để upload file
+      chatService.sendFile(file as PlatformFile);
+    }
+  }
+
   void _sendMessage() {
     if (_controller.text.isNotEmpty) {
       chatService.sendMessage(_controller.text);
@@ -93,6 +131,17 @@ class _ChatScreenState extends State<ChatScreen> {
             child: const Text('Recall'),
           ),
         ],
+//   void _startVideoCall() {
+//     print("Navigating to video call screen..."); // Thêm log
+//     Navigator.push(
+//       context,
+//       MaterialPageRoute(
+//         builder: (context) => VideoCallScreen(
+//           userId: widget.userId,
+//           friendId: widget.friendId,
+//           localRenderer: localRenderer,
+//           remoteRenderer: remoteRenderer,
+//         ),
       ),
     );
   }
@@ -156,7 +205,7 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Chat'),
-        backgroundColor: Colors.transparent,   // Màu của AppBar
+        backgroundColor: Colors.transparent, // Màu của AppBar
         elevation: 4.0, // Tạo hiệu ứng đổ bóng cho AppBar
         flexibleSpace: Container(
           decoration: const BoxDecoration(
@@ -164,7 +213,7 @@ class _ChatScreenState extends State<ChatScreen> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Color.fromARGB(207, 70, 131, 180),  // Màu thứ hai
+                Color.fromARGB(207, 70, 131, 180), // Màu thứ hai
                 Color.fromARGB(41, 130, 190, 197), // Màu đầu tiên
               ],
             ),
@@ -247,27 +296,49 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                       borderRadius: BorderRadius.circular(15),  // Bo góc cho thanh ngoài
                     ),
-                    child: TextField(
-                      controller: _controller,
-                      decoration: const InputDecoration(
-                        hintText: 'Enter a message',
-                        border: InputBorder.none,  // Loại bỏ viền mặc định của TextField
-                        contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                      ),
+                    borderRadius:
+                        BorderRadius.circular(15), // Bo góc cho thanh ngoài
+                  ),
+                  child: TextField(
+                    controller: _controller,
+                    decoration: const InputDecoration(
+                      hintText: 'Enter a message',
+                      border: InputBorder
+                          .none, // Loại bỏ viền mặc định của TextField
+                      contentPadding:
+                          EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                     ),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.send),
-                  onPressed: _sendMessage,
-                  iconSize: 30,
-                  color: Color.fromARGB(227, 130, 190, 197), // Màu cho icon
-                ),
-              ],
-            ),
+              ),
+
+              // Nút gửi file với hiệu ứng màu nền
+              IconButton(
+                icon: const Icon(Icons.attach_file),
+                onPressed: _selectFile,
+                iconSize: 30,
+                color: Color.fromARGB(227, 130, 190, 197), // Màu cho icon
+              ),
+
+              // Nút gửi tin nhắn với hiệu ứng màu nền
+              IconButton(
+                icon: const Icon(Icons.send),
+                onPressed: _sendMessage,
+                iconSize: 30,
+                color: Color.fromARGB(227, 130, 190, 197), // Màu cho icon
+              ),
+
+              // Nút gọi video với hiệu ứng màu nền
+              IconButton(
+                icon: const Icon(Icons.video_call),
+                onPressed: _startVideoCall,
+                iconSize: 30,
+                color: Color.fromARGB(227, 130, 190, 197), // Màu cho icon
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ]),
     );
   }
 }
