@@ -12,8 +12,8 @@ import '../config/config.dart';
 
 class ChatService {
   late IO.Socket socket;
-  final _messageStreamController =
-      StreamController<Map<String, String>>.broadcast();
+  final _messageStreamController = StreamController<Map<String, String>>.broadcast();
+  final _recallStreamController = StreamController<String>.broadcast();
   final String userId;
   final String friendId;
 
@@ -25,15 +25,27 @@ class ChatService {
   }
 
   void _connectSocket() {
+    // Remove any existing event listeners
+    socket.off('receiveMessage');
+    socket.off('messageRecalled');
+    
     socket.on('receiveMessage', (data) {
-      if (data['sender'] != userId) {
-        _messageStreamController.add({
-          'sender': data['sender'],
-          'message': data['message'],
-        });
-      }
+      _messageStreamController.add({
+        'id': data['_id'], // Use the MongoDB _id from server
+        'sender': data['sender'],
+        'message': data['message'],
+        'isRecalled': 'false',
+        'timestamp': DateTime.now().toIso8601String(),
+      });
     });
 
+    socket.on('messageRecalled', (data) {
+      _recallStreamController.add(data['messageId']);
+    });
+
+    // Leave any existing rooms first
+    socket.emit('leaveRoom', {'userId': userId, 'friendId': friendId});
+    // Join new room
     socket.emit('joinRoom', {'userId': userId, 'friendId': friendId});
   }
 
@@ -43,16 +55,25 @@ class ChatService {
       'receiver': friendId,
       'message': message,
     });
-    _messageStreamController.add({'sender': userId, 'message': message});
+    // Don't add message to stream here - wait for server response
   }
 
-  // Stream để lắng nghe tin nhắn
-  Stream<Map<String, String>> get messageStream =>
-      _messageStreamController.stream;
+  void recallMessage(String messageId) {
+    socket.emit('recallMessage', {
+      'messageId': messageId,
+      'sender': userId,
+      'receiver': friendId,
+    });
+  }
+  Stream<Map<String, String>> get oldMessageStream => _messageStreamController.stream;
+  Stream<String> get recallStream => _recallStreamController.stream;
 
   void dispose() {
     socket.emit('leaveRoom', {'userId': userId, 'friendId': friendId});
+    socket.off('receiveMessage');
+    socket.off('messageRecalled');
     _messageStreamController.close();
+    _recallStreamController.close();
   }
 
   // Hàm lấy tin nhắn cũ
@@ -64,10 +85,13 @@ class ChatService {
         final List<dynamic> data = jsonDecode(response.body);
         return data.map((msg) {
           return {
+            'id': msg['_id'].toString(),
             'sender': msg['sender'].toString(),
             'message': msg['message'].toString(),
+            'isRecalled': msg['isRecalled']?.toString() ?? 'false',
+            'timestamp': msg['timestamp']?.toString() ?? DateTime.now().toIso8601String(),
           };
-        }).toList();
+        }).toList().cast<Map<String, String>>();
       } else {
         throw Exception('Failed to load messages: ${response.body}');
       }

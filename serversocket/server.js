@@ -7,7 +7,9 @@ const friendRoutes = require('./routes/friendRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const Message = require('./models/Message');
 const GroupMessage = require('./models/GroupMessage');
-const Group = require('./routes/groupRoutes')
+const User = require('./models/User');
+const GroupRoutes = require('./routes/groupRoutes')
+const Group = require('./models/Group');
 const userRoutes = require('./routes/userRoutes')
 
 const app = express();
@@ -16,7 +18,6 @@ const io = socketIo(server);
 
 const admin = require('firebase-admin');
 
-// // Tải file service account từ Firebase Console
 const serviceAccount = require('./key/app-chat-push-notification.json');
 
 admin.initializeApp({
@@ -42,7 +43,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/friends', friendRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/groups', Group);
+app.use('/api/groups', GroupRoutes);
 
 io.on('connection', (socket) => {
   console.log('New client connected');
@@ -73,39 +74,52 @@ io.on('connection', (socket) => {
   socket.on('sendMessage', async (data) => {
     try {
       const { sender, receiver, message } = data;
-  
-      // Kiểm tra dữ liệu đầu vào
-      if (!sender || !receiver || !message) {
-        console.error('Invalid message data:', data);
-        return;
-      }
-  
-      // Tạo tên phòng
-      const roomName = [sender, receiver].sort().join('_');
-  
-      // Lưu tin nhắn vào cơ sở dữ liệu
+      
+      // Save message and get the MongoDB generated _id
       const newMessage = new Message({ sender, receiver, message });
       await newMessage.save();
-  
-      // Gửi tin nhắn tới phòng
-      io.to(roomName).emit('receiveMessage', data);
 
+      // Create room name
+      const roomName = [sender, receiver].sort().join('_');
+
+      // Include the MongoDB _id in the response
+      io.to(roomName).emit('receiveMessage', {
+        _id: newMessage._id,
+        sender,
+        receiver,
+        message
+      });
+
+      // Tìm FCM token của người nhận
+      const user = await User.findById(receiver);
+  
       if (user && user.fcmToken) {
         // Gửi thông báo FCM
         const payload = {
+          token: user.fcmToken,
           notification: {
-            title: `New message from ${sender}`,
+            title: `New message from ${user.username}`,
             body: message,
           },
-        };
+          android: {
 
-        await admin.messaging().sendToDevice(user.fcmToken, payload);
-        console.log('Notification sent!');
+
+            collapseKey: `chat_${receiver}`, // Hợp nhất thông báo theo người nhận
+            notification: {
+              tag: `user_${sender}`, // Gộp theo người gửi
+            },
+          },
+        };
+        
+  
+        // Sử dụng admin.messaging().send
+        const response = await admin.messaging().send(payload);
+        console.log('Notification sent successfully:', response);
       }
     } catch (err) {
       console.error('Error handling sendMessage:', err);
     }
-  });  
+  });
 
   socket.on('leaveRoom', ({ userId, friendId }) => {
     const roomName = [userId, friendId].sort().join('_');
@@ -132,22 +146,100 @@ io.on('connection', (socket) => {
       const groupMessage = new GroupMessage({ groupId, sender, message });
       await groupMessage.save();
 
-      console.log(groupMessage);
-
-      console.log(groupId);
-
+      // Get sender's username and group details
+      const senderUser = await User.findById(sender);
+      const senderName = senderUser ? senderUser.username : 'Unknown';
+      const group = await Group.findById(groupId);
       // Phát tin nhắn tới tất cả thành viên trong nhóm
       io.to(groupId).emit('receiveGroupMessage', {
         groupId,
         sender,
+        senderName,
         message,
         timestamp: groupMessage.timestamp,
       });
+
+      // Send push notification to all group members
+      if (group && group.members) {
+        const members = await User.find({ _id: { $in: group.members, $ne: sender } });
+        
+        for (const member of members) {
+          if (member.fcmToken) {
+            const payload = {
+              token: member.fcmToken,
+              notification: {
+                title: `${group.name}`,
+                body: `${senderName}: ${message}`,
+              },
+              android: {
+                collapseKey: `group_${groupId}`,
+                notification: {
+                  tag: `group_${groupId}`,
+                },
+              },
+            };
+            try {
+              await admin.messaging().send(payload);
+            } catch (err) {
+              console.error('Error sending notification to member:', err);
+            }
+          }
+        }
+      }
     } catch (err) {
       console.error('Error sending group message:', err);
     }
   });
   
+  socket.on('recallMessage', async (data) => {
+    try {
+      const { messageId, sender, receiver } = data;
+      const message = await Message.findById(messageId);
+      
+      if (!message) {
+        console.error('Message not found:', messageId);
+        return;
+      }
+
+      // Update message in database
+      await Message.findByIdAndUpdate(messageId, { isRecalled: true });
+      
+      // Send recall event to both sender and receiver
+      const roomName = [sender, receiver].sort().join('_');
+      io.to(roomName).emit('messageRecalled', { 
+        messageId,
+        isRecalled: true,
+        timestamp: new Date()
+      });
+
+    } catch (err) {
+      console.error('Error recalling message:', err);
+    }
+  });
+
+  socket.on('recallGroupMessage', async (data) => {
+    try {
+      const { messageId, groupId } = data;
+      const message = await GroupMessage.findById(messageId);
+      
+      if (!message) {
+        console.error('Group message not found:', messageId);
+        return;
+      }
+
+      // Update message in database
+      await GroupMessage.findByIdAndUpdate(messageId, { isRecalled: true });
+      
+      // Send recall event to group
+      io.to(groupId).emit('groupMessageRecalled', { 
+        messageId,
+        isRecalled: true,
+        timestamp: new Date()
+      });
+
+    } catch (err) {
+      console.error('Error recalling group message:', err);
+    }
   // Signaling cho WebRTC
   socket.on('offer', ({ roomName, sdp }) => {
     console.log(`Offer received for room ${roomName}`);

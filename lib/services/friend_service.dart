@@ -7,7 +7,8 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../config/config.dart';
 
 class FriendService {
-  final StreamController<List<dynamic>> _friendsController = StreamController<List<dynamic>>.broadcast();
+  final StreamController<List<dynamic>> _friendsController =
+      StreamController<List<dynamic>>.broadcast();
   Stream<List<dynamic>> get friendsStream => _friendsController.stream;
   late IO.Socket socket;
 
@@ -51,8 +52,10 @@ class FriendService {
   void _fetchFriends(Map<String, dynamic> data) {
     // Kiểm tra xem bạn bè này đã tồn tại trong danh sách chưa
     final index = _friends.indexWhere((friend) =>
-        (friend['requester'] == data['requester'] && friend['receiver'] == data['receiver']) ||
-        (friend['requester'] == data['receiver'] && friend['receiver'] == data['requester']));
+        (friend['requester'] == data['requester'] &&
+            friend['receiver'] == data['receiver']) ||
+        (friend['requester'] == data['receiver'] &&
+            friend['receiver'] == data['requester']));
 
     if (index != -1) {
       // Nếu tồn tại, cập nhật thông tin
@@ -64,9 +67,9 @@ class FriendService {
     print(_friends);
 
     // Thông báo cập nhật tới giao diện
-    _friendsController.add(List.from(_friends)); // Tạo một danh sách mới để StreamBuilder nhận thay đổi
+    _friendsController.add(List.from(
+        _friends)); // Tạo một danh sách mới để StreamBuilder nhận thay đổi
   }
-
 
   // void dispose() {
   //   _socket?.dispose();
