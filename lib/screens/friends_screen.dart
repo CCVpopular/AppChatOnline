@@ -28,11 +28,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
     friendService.getFriends(widget.userId);
   }
 
-  @override
-  void dispose() {
-    friendService.dispose();
-    super.dispose();
-  }
+  // @override
+  // void dispose() {
+  //   friendService.dispose();
+  //   super.dispose();
+  // }
 
   @override
   Widget build(BuildContext context) {

@@ -1,15 +1,27 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
+
+import 'video_call_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   final String userId;
   final String friendId;
 
-  const ChatScreen({Key? key, required this.userId, required this.friendId}) : super(key: key);
+  const ChatScreen({Key? key, required this.userId, required this.friendId})
+      : super(key: key);
 
   @override
   _ChatScreenState createState() => _ChatScreenState();
 }
+
+// Khởi tạo RTCVideoRenderer
+late RTCVideoRenderer localRenderer;
+late RTCVideoRenderer remoteRenderer;
 
 class _ChatScreenState extends State<ChatScreen> {
   late ChatService chatService;
@@ -20,17 +32,38 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    messages.clear(); // Clear messages when initializing
+
+    // Khởi tạo các đối tượng video renderer
+    localRenderer = RTCVideoRenderer();
+    remoteRenderer = RTCVideoRenderer();
 
     // Khởi tạo ChatService
     chatService = ChatService(widget.userId, widget.friendId);
 
-    // Tải tin nhắn cũ từ server
+    // Load old messages
     _loadMessages();
 
-    // Lắng nghe tin nhắn mới từ Stream
+    // Listen for new messages
     chatService.messageStream.listen((message) {
       setState(() {
-        messages.add(message);
+        // Check if message already exists to prevent duplicates
+        if (!messages.any((msg) => msg['id'] == message['id'])) {
+          messages.add(message);
+        }
+      });
+    });
+
+    // Listen for message recalls
+    chatService.recallStream.listen((messageId) {
+      setState(() {
+        final index = messages.indexWhere((msg) => msg['id'] == messageId);
+        if (index != -1) {
+          messages[index] = {
+            ...messages[index]!,
+            'isRecalled': 'true'
+          };
+        }
       });
     });
   }
@@ -39,6 +72,8 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       final oldMessages = await chatService.loadMessages();
       setState(() {
+        // Clear existing messages before adding old ones
+        messages.clear();
         messages.addAll(oldMessages);
         isLoading = false;
       });
@@ -50,11 +85,65 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  Future<void> _selectFile() async {
+    final result = await FilePicker.platform.pickFiles();
+    if (result != null && result.files.isNotEmpty) {
+      final file = result.files.first;
+
+      // Gọi hàm sendFile để upload file lên server
+      chatService.sendFile(file);
+    }
+  }
+
+  Future<void> _selectImage() async {
+    final picker = ImagePicker();
+    final pickedImage = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedImage != null) {
+      final file = File(pickedImage.path);
+      // Gọi sendFile để upload file
+      chatService.sendFile(file as PlatformFile);
+    }
+  }
+
   void _sendMessage() {
     if (_controller.text.isNotEmpty) {
       chatService.sendMessage(_controller.text);
       _controller.clear();
     }
+  }
+
+  void _showRecallDialog(String messageId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Recall Message'),
+        content: const Text('Do you want to recall this message?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              chatService.recallMessage(messageId);
+              Navigator.pop(context);
+            },
+            child: const Text('Recall'),
+          ),
+        ],
+//   void _startVideoCall() {
+//     print("Navigating to video call screen..."); // Thêm log
+//     Navigator.push(
+//       context,
+//       MaterialPageRoute(
+//         builder: (context) => VideoCallScreen(
+//           userId: widget.userId,
+//           friendId: widget.friendId,
+//           localRenderer: localRenderer,
+//           remoteRenderer: remoteRenderer,
+//         ),
+      ),
+    );
   }
 
   @override
@@ -63,12 +152,60 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
+  Widget _buildMessageContent(Map<String, String> message) {
+    final isRecalled = message['isRecalled'] == 'true';
+    final timestamp = DateTime.parse(message['timestamp'] ?? DateTime.now().toIso8601String());
+    final timeStr = "${timestamp.day}/${timestamp.month} ${timestamp.hour.toString().padLeft(2,'0')}:${timestamp.minute.toString().padLeft(2,'0')}";
+    
+    return Container(
+      margin: const EdgeInsets.all(5.0),
+      padding: const EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: message['sender'] == widget.userId
+            ? const Color.fromARGB(145, 130, 190, 197)
+            : Colors.grey[300],
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: message['sender'] == widget.userId 
+            ? CrossAxisAlignment.end 
+            : CrossAxisAlignment.start,
+        children: [
+          isRecalled 
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(Icons.replay, size: 16, color: Colors.grey),
+                  SizedBox(width: 4),
+                  Text(
+                    'Message has been recalled',
+                    style: TextStyle(
+                      fontStyle: FontStyle.italic,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              )
+            : Text(message['message'] ?? ''),
+          const SizedBox(height: 4),
+          Text(
+            timeStr,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.grey,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Chat'),
-        backgroundColor: Colors.transparent,   // Màu của AppBar
+        backgroundColor: Colors.transparent, // Màu của AppBar
         elevation: 4.0, // Tạo hiệu ứng đổ bóng cho AppBar
         flexibleSpace: Container(
           decoration: BoxDecoration(
@@ -105,69 +242,50 @@ class _ChatScreenState extends State<ChatScreen> {
                     itemBuilder: (context, index) {
                       final message = messages[index];
                       final isCurrentUser = message['sender'] == widget.userId;
-                      return Row(
-                        mainAxisAlignment: isCurrentUser
-                            ? MainAxisAlignment.end
-                            : MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Avatar cho người gửi khác
-                          if (!isCurrentUser)
-                            const Padding(
-                              padding: EdgeInsets.only(left: 8.0, right: 4.0),
-                              child: CircleAvatar(
-                                backgroundColor: Colors.grey, // Màu xám cho avatar
-                                radius: 20, // Kích thước avatar
-                                child: Icon(
-                                  Icons.person, // Biểu tượng người dùng
-                                  color: Colors.white, // Màu icon
-                                  size: 20, // Kích thước icon
+                      final isRecalled = message['isRecalled'] == 'true';
+
+                      return GestureDetector(
+                        onLongPress: isCurrentUser && !isRecalled && message['id'] != null
+                            ? () => _showRecallDialog(message['id']!)
+                            : null,
+                        child: Row(
+                          mainAxisAlignment: isCurrentUser
+                              ? MainAxisAlignment.end
+                              : MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Avatar cho người gửi khác
+                            if (!isCurrentUser)
+                              const Padding(
+                                padding: EdgeInsets.only(left: 8.0, right: 4.0),
+                                child: CircleAvatar(
+                                  backgroundColor: Colors.grey, // Màu xám cho avatar
+                                  radius: 20, // Kích thước avatar
+                                  child: Icon(
+                                    Icons.person, // Biểu tượng người dùng
+                                    color: Colors.white, // Màu icon
+                                    size: 20, // Kích thước icon
+                                  ),
                                 ),
                               ),
-                            ),
-                          // Bong bóng tin nhắn
-                          Flexible(
-                            child: Container(
-                              margin: const EdgeInsets.all(5.0),
-                              padding: const EdgeInsets.all(12.0),
-                              decoration: BoxDecoration(
-                                color: isCurrentUser
-                                    ? const Color.fromARGB(145, 130, 190, 197)
-                                    : const Color.fromARGB(145, 130, 190, 197),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: message.containsKey('fileUrl')
-                                  ? Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        if (message['message'] != null)
-                                          Text(message['message']!),
-                                        const SizedBox(height: 8.0),
-                                        Image.network(
-                                          message['fileUrl']!,
-                                          height: 200,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ],
-                                    )
-                                  : Text(message['message'] ?? ''),
-                            ),
-                          ),
-                          if (isCurrentUser)
-                            const Padding(
-                              padding: EdgeInsets.only(left: 4.0, right: 8.0),
-                              child: CircleAvatar(
-                                backgroundColor:
-                                    Color.fromARGB(255, 3, 62, 72), // Màu xanh cho avatar
-                                radius: 20, // Kích thước avatar
-                                child: Icon(
-                                  Icons.person, // Biểu tượng người dùng
-                                  color: Colors.white, // Màu icon
-                                  size: 20, // Kích thước icon
+                            // Bong bóng tin nhắn
+                            Flexible(child: _buildMessageContent(message)),
+                            if (isCurrentUser) 
+                              const Padding(
+                                padding: EdgeInsets.only(left: 4.0, right: 8.0),
+                                child: CircleAvatar(
+                                  backgroundColor:
+                                      Color.fromARGB(255, 3, 62, 72), // Màu xanh cho avatar
+                                  radius: 20, // Kích thước avatar
+                                  child: Icon(
+                                    Icons.person, // Biểu tượng người dùng
+                                    color: Colors.white, // Màu icon
+                                    size: 20, // Kích thước icon
+                                  ),
                                 ),
                               ),
-                            ),
-                        ],
+                          ],
+                        ),
                       );
                     },
                   ),
@@ -190,27 +308,49 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                       borderRadius: BorderRadius.circular(15),  // Bo góc cho thanh ngoài
                     ),
-                    child: TextField(
-                      controller: _controller,
-                      decoration: const InputDecoration(
-                        hintText: 'Enter a message',
-                        border: InputBorder.none,  // Loại bỏ viền mặc định của TextField
-                        contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                      ),
+                    borderRadius:
+                        BorderRadius.circular(15), // Bo góc cho thanh ngoài
+                  ),
+                  child: TextField(
+                    controller: _controller,
+                    decoration: const InputDecoration(
+                      hintText: 'Enter a message',
+                      border: InputBorder
+                          .none, // Loại bỏ viền mặc định của TextField
+                      contentPadding:
+                          EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                     ),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.send),
-                  onPressed: _sendMessage,
-                  iconSize: 30,
-                  color: Color.fromARGB(227, 130, 190, 197), // Màu cho icon
-                ),
-              ],
-            ),
+              ),
+
+              // Nút gửi file với hiệu ứng màu nền
+              IconButton(
+                icon: const Icon(Icons.attach_file),
+                onPressed: _selectFile,
+                iconSize: 30,
+                color: Color.fromARGB(227, 130, 190, 197), // Màu cho icon
+              ),
+
+              // Nút gửi tin nhắn với hiệu ứng màu nền
+              IconButton(
+                icon: const Icon(Icons.send),
+                onPressed: _sendMessage,
+                iconSize: 30,
+                color: Color.fromARGB(227, 130, 190, 197), // Màu cho icon
+              ),
+
+              // Nút gọi video với hiệu ứng màu nền
+              IconButton(
+                icon: const Icon(Icons.video_call),
+                onPressed: _startVideoCall,
+                iconSize: 30,
+                color: Color.fromARGB(227, 130, 190, 197), // Màu cho icon
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ]),
     );
   }
 }

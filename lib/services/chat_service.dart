@@ -1,34 +1,51 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
+
 import 'package:appchatonline/services/SocketManager.dart';
 import 'package:http/http.dart' as http;
+import 'package:file_picker/file_picker.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
-
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import '../config/config.dart';
 
 class ChatService {
   late IO.Socket socket;
   final _messageStreamController = StreamController<Map<String, String>>.broadcast();
+  final _recallStreamController = StreamController<String>.broadcast();
   final String userId;
   final String friendId;
 
   final String baseUrl = Config.apiBaseUrl;
 
-ChatService(this.userId, this.friendId) {
+  ChatService(this.userId, this.friendId) {
     socket = SocketManager(Config.apiBaseUrl).getSocket();
     _connectSocket();
   }
 
   void _connectSocket() {
+    // Remove any existing event listeners
+    socket.off('receiveMessage');
+    socket.off('messageRecalled');
+    
     socket.on('receiveMessage', (data) {
-      if (data['sender'] != userId) {
-        _messageStreamController.add({
-          'sender': data['sender'],
-          'message': data['message'],
-        });
-      }
+      _messageStreamController.add({
+        'id': data['_id'], // Use the MongoDB _id from server
+        'sender': data['sender'],
+        'message': data['message'],
+        'isRecalled': 'false',
+        'timestamp': DateTime.now().toIso8601String(),
+      });
     });
 
+    socket.on('messageRecalled', (data) {
+      _recallStreamController.add(data['messageId']);
+    });
+
+    // Leave any existing rooms first
+    socket.emit('leaveRoom', {'userId': userId, 'friendId': friendId});
+    // Join new room
     socket.emit('joinRoom', {'userId': userId, 'friendId': friendId});
   }
 
@@ -38,14 +55,25 @@ ChatService(this.userId, this.friendId) {
       'receiver': friendId,
       'message': message,
     });
-    _messageStreamController.add({'sender': userId, 'message': message});
+    // Don't add message to stream here - wait for server response
   }
 
-  // Stream<Map<String, String>> get messageStream => _messageStreamController.stream;
+  void recallMessage(String messageId) {
+    socket.emit('recallMessage', {
+      'messageId': messageId,
+      'sender': userId,
+      'receiver': friendId,
+    });
+  }
+  Stream<Map<String, String>> get oldMessageStream => _messageStreamController.stream;
+  Stream<String> get recallStream => _recallStreamController.stream;
 
   void dispose() {
     socket.emit('leaveRoom', {'userId': userId, 'friendId': friendId});
+    socket.off('receiveMessage');
+    socket.off('messageRecalled');
     _messageStreamController.close();
+    _recallStreamController.close();
   }
 
   // Hàm lấy tin nhắn cũ
@@ -57,10 +85,13 @@ ChatService(this.userId, this.friendId) {
         final List<dynamic> data = jsonDecode(response.body);
         return data.map((msg) {
           return {
+            'id': msg['_id'].toString(),
             'sender': msg['sender'].toString(),
             'message': msg['message'].toString(),
+            'isRecalled': msg['isRecalled']?.toString() ?? 'false',
+            'timestamp': msg['timestamp']?.toString() ?? DateTime.now().toIso8601String(),
           };
-        }).toList();
+        }).toList().cast<Map<String, String>>();
       } else {
         throw Exception('Failed to load messages: ${response.body}');
       }
@@ -69,16 +100,47 @@ ChatService(this.userId, this.friendId) {
     }
   }
 
-  // Stream để lắng nghe tin nhắn
-  Stream<Map<String, String>> get messageStream => _messageStreamController.stream;
+ // Hàm để lấy đường dẫn tệp thực tế từ URI
+Future<String> getFilePathFromUri(Uri uri) async {
+  final file = File(uri.path!); // Tạo đối tượng File từ URI
+  if (await file.exists()) {
+    final directory = await getTemporaryDirectory(); // Lấy thư mục tạm
+    final tempFile = File('${directory.path}/${file.uri.pathSegments.last}');
+    // Sao chép file vào thư mục tạm và trả về đường dẫn mới
+    await file.copy(tempFile.path);
+    return tempFile.path;
+  } else {
+    throw Exception("File does not exist at the given URI");
+  }
+}
 
-  // // Đóng Stream và Socket
-  // void dispose() {
-  //   socket.emit('leaveRoom', {
-  //     'userId': userId,
-  //     'friendId': friendId,
-  //   });
-  //   socket.disconnect();
-  //   _messageStreamController.close();
-  // }
+  // Xử lý upload file
+  Future<void> sendFile(PlatformFile file) async {
+    final url = Uri.parse('${baseUrl}/api/messages/upload');
+    final request = http.MultipartRequest('POST', url);
+
+    request.fields['sender'] = userId;
+    request.fields['receiver'] = friendId;
+
+    // Lấy đường dẫn file thực tế từ URI
+    final filePath = await getFilePathFromUri(Uri.parse(file.path!));
+    print('File path: $filePath');
+    
+      
+
+    // Gửi file lên server
+    request.files.add(await http.MultipartFile.fromPath(
+      'file',
+      filePath, // Sử dụng đường dẫn file đã chuyển đổi
+      filename: file.name,
+    ));
+
+    final response = await request.send();
+    if (response.statusCode == 200) {
+      print('File uploaded successfully');
+    } else {
+      print(
+          'Failed to upload file: ${response.statusCode}, ${response.reasonPhrase}');
+    }
+  }
 }
