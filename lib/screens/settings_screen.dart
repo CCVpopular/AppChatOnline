@@ -24,17 +24,29 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Settings'),
+        title:const Text('Settings'),
         backgroundColor: Colors.transparent, // Màu của AppBar
         elevation: 4.0, // Tạo hiệu ứng đổ bóng cho AppBar
         flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white // Viền trắng khi chế độ tối
+                  : Colors.black, // Viền đen khi chế độ sáng
+              width: 2.0, // Độ dày của viền
+            ),
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(20), // Bo tròn góc dưới bên trái
+              bottomRight: Radius.circular(20), // Bo tròn góc dưới bên phải
+              topLeft: Radius.circular(38), // Bo tròn góc trên bên phải
+              topRight: Radius.circular(38), // Bo tròn góc trên bên phải
+            ),
+            gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
                 Color.fromARGB(207, 70, 131, 180), // Màu thứ hai
-                Color.fromARGB(41, 130, 190, 197), // Màu đầu tiên
+                Color.fromARGB(41, 132, 181, 187), // Màu đầu tiên
               ],
             ),
           ),
@@ -47,35 +59,37 @@ class SettingsScreen extends StatelessWidget {
           children: [
             // Nút gạt (Switch) cho Dark/Light Mode
             ListTile(
-              title: Text(
+              title: const Text(
                 'Dark Mode',
                 style: TextStyle(fontSize: 18),
               ),
               trailing: Switch(
                 value: context.watch<ThemeNotifier>().themeMode == ThemeMode.dark,
                 onChanged: (bool value) {
-                  // Khi người dùng thay đổi giá trị của Switch, cập nhật theme
                   final themeNotifier = context.read<ThemeNotifier>();
                   themeNotifier.setThemeMode(
                     value ? ThemeMode.dark : ThemeMode.light,
                   );
                 },
               ),
+              subtitle:const Text(
+                'Customize your theme preferences.',
+              ),
             ),
-            Divider(),
+            const Divider(),
             // Thông tin người dùng
-            Text(
+            const Text(
               'User Information',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Text('Username: $username'),
             Text('User ID: $userId'),
-            SizedBox(height: 20),
-            Divider(),
+            const SizedBox(height: 20),
+            const Divider(),
             ListTile(
-              leading: Icon(Icons.logout, color: Colors.red),
-              title: Text('Logout', style: TextStyle(color: Colors.red)),
+              leading:const Icon(Icons.logout, color: Colors.red),
+              title:const Text('Logout', style: TextStyle(color: Colors.red)),
               onTap: () => _logout(context),
             ),
           ],
