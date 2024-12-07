@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // Đảm bảo rằng bạn import provider
 import '../services/auth_service.dart';
 import 'login_screen.dart';
-import '../theme/theme_notifier.dart'; // Đảm bảo rằng bạn import ThemeNotifier
 
 class SettingsScreen extends StatelessWidget {
   final String username;
@@ -31,25 +29,6 @@ class SettingsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Nút gạt (Switch) cho Dark/Light Mode
-            ListTile(
-              title: Text(
-                'Dark Mode',
-                style: TextStyle(fontSize: 18),
-              ),
-              trailing: Switch(
-                value: context.watch<ThemeNotifier>().themeMode == ThemeMode.dark,
-                onChanged: (bool value) {
-                  // Khi người dùng thay đổi giá trị của Switch, cập nhật theme
-                  final themeNotifier = context.read<ThemeNotifier>();
-                  themeNotifier.setThemeMode(
-                    value ? ThemeMode.dark : ThemeMode.light,
-                  );
-                },
-              ),
-            ),
-            Divider(),
-            // Thông tin người dùng
             Text(
               'User Information',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
