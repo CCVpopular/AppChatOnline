@@ -117,13 +117,25 @@ class _FriendRequestsScreenState extends State<FriendRequestsScreen> {
         backgroundColor: Colors.transparent, // Màu của AppBar
         elevation: 4.0, // Tạo hiệu ứng đổ bóng cho AppBar
         flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white // Viền trắng khi chế độ tối
+                  : Colors.black, // Viền đen khi chế độ sáng
+              width: 2.0, // Độ dày của viền
+            ),
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(20), // Bo tròn góc dưới bên trái
+              bottomRight: Radius.circular(20), // Bo tròn góc dưới bên phải
+              topLeft: Radius.circular(38), // Bo tròn góc trên bên phải
+              topRight: Radius.circular(38), // Bo tròn góc trên bên phải
+            ),
+            gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
                 Color.fromARGB(207, 70, 131, 180), // Màu thứ hai
-                Color.fromARGB(41, 130, 190, 197), // Màu đầu tiên
+                Color.fromARGB(41, 132, 181, 187), // Màu đầu tiên
               ],
             ),
           ),
